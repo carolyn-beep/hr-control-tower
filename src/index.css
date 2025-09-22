@@ -2,39 +2,56 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* HR Control Tower Design System - Professional & Modern */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 250 20% 98%;
+    --foreground: 224 15% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 224 15% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 224 15% 15%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 241 79% 52%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 241 79% 65%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 240 10% 96%;
+    --secondary-foreground: 224 15% 15%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 240 10% 96%;
+    --muted-foreground: 224 10% 45%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 250 100% 97%;
+    --accent-foreground: 241 79% 52%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 240 10% 91%;
+    --input: 240 10% 91%;
+    --ring: 241 79% 52%;
+
+    /* HR-specific gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(241 79% 52%), hsl(241 79% 65%));
+    --gradient-hero: linear-gradient(135deg, hsl(241 79% 52%), hsl(260 85% 60%));
+    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%), hsl(250 20% 98%));
+    
+    /* Shadows */
+    --shadow-card: 0 4px 16px -4px hsl(241 79% 52% / 0.1);
+    --shadow-dashboard: 0 8px 32px -8px hsl(241 79% 52% / 0.15);
+    
+    /* Transitions */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
     --radius: 0.5rem;
 
