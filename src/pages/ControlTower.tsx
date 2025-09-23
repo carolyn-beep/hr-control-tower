@@ -28,6 +28,7 @@ import heroImage from "@/assets/hr-hero.jpg";
 import { useDashboardMetrics } from "@/hooks/useDashboardMetrics";
 import { useRecentSignalsWithPerson } from "@/hooks/useRecentSignalsWithPerson";
 import { useRiskTrend } from "@/hooks/useRiskTrend";
+import { usePersonSignalsSummary } from "@/hooks/usePersonSignalsSummary";
 import { useRefreshDemoData } from "@/hooks/useRefreshDemoData";
 import { ReleaseEvaluationModal } from "@/components/ReleaseEvaluationModal";
 import { AutoCoachModal } from "@/components/AutoCoachModal";
@@ -110,7 +111,7 @@ const recentSignals = [
 
 const ControlTower = () => {
   const { data: metrics, isLoading, error } = useDashboardMetrics();
-  const { data: recentSignals, isLoading: signalsLoading } = useRecentSignalsWithPerson();
+  const { data: signalsSummary, isLoading: signalsLoading } = usePersonSignalsSummary();
   const { data: riskTrend, isLoading: riskTrendLoading } = useRiskTrend();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -581,84 +582,110 @@ const ControlTower = () => {
                         <p>Loading signals...</p>
                       </div>
                     </div>
-                  ) : !recentSignals || recentSignals.length === 0 ? (
+                  ) : !signalsSummary || signalsSummary.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">
                       <AlertTriangle className="h-8 w-8 mx-auto mb-2 opacity-50" />
                       <p>No recent signals</p>
                       <p className="text-sm">All systems are running smoothly</p>
                     </div>
                   ) : (
-                    recentSignals.map((signal, index) => {
-                      const getBadgeVariant = (level: string) => {
-                        switch (level.toLowerCase()) {
-                          case 'critical': return 'destructive';
-                          case 'risk': return 'default';
-                          case 'warn': return 'secondary';
-                          case 'info': return 'outline';
-                          default: return 'outline';
-                        }
+                    signalsSummary.map((person) => {
+                      const getTotalSignals = () => person.critical_count + person.risk_count + person.warn_count + person.info_count;
+                      const getHighestSeverity = () => {
+                        if (person.critical_count > 0) return 'critical';
+                        if (person.risk_count > 0) return 'risk';
+                        if (person.warn_count > 0) return 'warn';
+                        return 'info';
                       };
 
                       const getBadgeColor = (level: string) => {
                         switch (level.toLowerCase()) {
-                          case 'critical': return 'text-destructive border-destructive bg-destructive/10';
-                          case 'risk': return 'text-warning border-warning bg-warning/10';
-                          case 'warn': return 'text-primary border-primary bg-primary/10';
-                          case 'info': return 'text-muted-foreground border-muted-foreground bg-muted/10';
-                          default: return 'text-muted-foreground border-muted-foreground bg-muted/10';
+                          case 'critical': return 'bg-destructive text-destructive-foreground border-destructive';
+                          case 'risk': return 'bg-warning text-warning-foreground border-warning';
+                          case 'warn': return 'bg-primary text-primary-foreground border-primary';
+                          case 'info': return 'bg-muted text-muted-foreground border-muted-foreground';
+                          default: return 'bg-muted text-muted-foreground border-muted-foreground';
                         }
                       };
 
-                      const getButtonText = (level: string) => {
-                        return ['risk', 'critical'].includes(level.toLowerCase()) 
-                          ? 'Evaluate for Release' 
-                          : 'Start Auto-Coach';
+                      const getRiskScoreBadgeColor = (score: number) => {
+                        if (score >= 7) return 'bg-destructive text-destructive-foreground';
+                        if (score >= 4) return 'bg-warning text-warning-foreground';
+                        return 'bg-success text-success-foreground';
                       };
 
-                      const getButtonIcon = (level: string) => {
-                        return ['risk', 'critical'].includes(level.toLowerCase()) 
-                          ? <UserCheck className="h-4 w-4 mr-2" />
-                          : <Play className="h-4 w-4 mr-2" />;
+                      const getSignalSummary = () => {
+                        const parts: string[] = [];
+                        if (person.critical_count > 0) parts.push(`${person.critical_count} Critical`);
+                        if (person.risk_count > 0) parts.push(`${person.risk_count} Risk`);
+                        if (person.warn_count > 0) parts.push(`${person.warn_count} Warn`);
+                        if (person.info_count > 0) parts.push(`${person.info_count} Info`);
+                        
+                        return parts.join(', ') + ` signal${getTotalSignals() > 1 ? 's' : ''}`;
+                      };
+
+                      const getCohortComparison = () => {
+                        const diff = Math.abs(person.risk_score - person.cohort_median);
+                        const comparison = person.risk_score > person.cohort_median ? 'above' : 'below';
+                        return `${diff.toFixed(1)}pt ${comparison} cohort median`;
                       };
 
                       return (
                         <div 
-                          key={signal.id} 
+                          key={person.id} 
                           className="flex items-center justify-between p-4 rounded-lg border bg-accent/30 hover:bg-accent/50 transition-colors"
                         >
                           <div className="flex items-center space-x-4 flex-1">
                             <Badge 
                               variant="outline" 
-                              className={`font-bold ${getBadgeColor(signal.level)}`}
+                              className={`font-bold text-xs min-w-[80px] justify-center ${getBadgeColor(getHighestSeverity())}`}
                             >
-                              {signal.level.toUpperCase()}
+                              {getHighestSeverity().toUpperCase()}
                             </Badge>
                             <div className="flex-1">
-                              <div className="font-semibold text-foreground">{signal.person}</div>
-                              <div className="text-sm text-muted-foreground">{signal.reason}</div>
+                              <div className="font-semibold text-foreground">{person.name}</div>
+                              <div className="text-sm text-muted-foreground">{getSignalSummary()}</div>
+                              <div className="text-xs text-muted-foreground mt-1">{getCohortComparison()}</div>
                             </div>
                           </div>
                           
-                          <Button 
-                            variant={['risk', 'critical'].includes(signal.level.toLowerCase()) ? "gradient" : "outline"}
-                            size="sm"
-                            className="shadow-soft hover:shadow-dashboard transition-all duration-200 hover:scale-105"
-                            onClick={() => {
-                              setSelectedPersonId(signal.person_id);
-                              setSelectedPersonName(signal.person);
-                              setSelectedSignalId(signal.id);
-                              setSelectedReason(signal.reason);
-                              
-                              if (['risk', 'critical'].includes(signal.level.toLowerCase())) {
-                                setModalOpen(true);
-                              } else {
-                                setAutoCoachModalOpen(true);
-                              }
-                            }}
-                          >
-                            {getButtonIcon(signal.level)}
-                            {getButtonText(signal.level)}
-                          </Button>
+                          <div className="flex items-center space-x-3">
+                            <Badge 
+                              variant="outline" 
+                              className={`text-xs min-w-[60px] justify-center ${getRiskScoreBadgeColor(person.risk_score)}`}
+                            >
+                              {person.risk_score.toFixed(1)}
+                            </Badge>
+                            <Button 
+                              variant={person.critical_count > 0 || person.risk_count > 0 ? "gradient" : "outline"}
+                              size="sm"
+                              className="shadow-soft hover:shadow-dashboard transition-all duration-200 hover:scale-105"
+                              onClick={() => {
+                                setSelectedPersonId(person.id);
+                                setSelectedPersonName(person.name);
+                                setSelectedSignalId(''); // No specific signal ID for aggregated view
+                                setSelectedReason(getSignalSummary());
+                                
+                                if (person.critical_count > 0 || person.risk_count > 0) {
+                                  setModalOpen(true);
+                                } else {
+                                  setAutoCoachModalOpen(true);
+                                }
+                              }}
+                            >
+                              {person.critical_count > 0 || person.risk_count > 0 ? (
+                                <>
+                                  <UserCheck className="h-4 w-4 mr-2" />
+                                  Evaluate for Release
+                                </>
+                              ) : (
+                                <>
+                                  <Play className="h-4 w-4 mr-2" />
+                                  Start Auto-Coach
+                                </>
+                              )}
+                            </Button>
+                          </div>
                         </div>
                       );
                     })
