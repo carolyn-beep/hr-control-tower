@@ -655,17 +655,29 @@ const ControlTower = () => {
                           </div>
                           
                           <div className="flex items-center space-x-3">
-                            {signal.score_delta && signal.score_delta < 0 && (
+                            {signal.score_delta && signal.score_delta !== 0 && (
                               <div className="text-right">
-                                <div className="text-sm font-semibold text-success">
-                                  {signal.score_delta}
+                                <div className={`text-sm font-semibold ${signal.score_delta < 0 ? 'text-success' : 'text-destructive'}`}>
+                                  {signal.score_delta >= 0 
+                                    ? `+${Math.round(signal.score_delta * 10) / 10}` 
+                                    : `${Math.round(signal.score_delta * 10) / 10}`
+                                  }
                                 </div>
-                                <div className="text-xs text-success flex items-center">
-                                  <ArrowDown className="h-3 w-3 mr-1" />
-                                  Risk ↓
+                                <div className={`text-xs flex items-center ${signal.score_delta < 0 ? 'text-success' : 'text-destructive'}`}>
+                                  {signal.score_delta < 0 ? (
+                                    <>
+                                      <ArrowDown className="h-3 w-3 mr-1" />
+                                      Risk ↓
+                                    </>
+                                  ) : (
+                                    <>
+                                      <ArrowUp className="h-3 w-3 mr-1" />
+                                      Risk ↑
+                                    </>
+                                  )}
                                 </div>
                               </div>
-                             )}
+                            )}
                              <SignalActionButton 
                                signal={signal}
                                onEvaluateClick={() => {
