@@ -31,7 +31,7 @@ import { useDashboardMetrics } from "@/hooks/useDashboardMetrics";
 import { useRecentSignalsWithPerson } from "@/hooks/useRecentSignalsWithPerson";
 import { useRiskTrend } from "@/hooks/useRiskTrend";
 import { usePersonSignalsSummary } from "@/hooks/usePersonSignalsSummary";
-import { useIndividualRecentSignals } from "@/hooks/useIndividualRecentSignals";
+import { useRankedSignals } from "@/hooks/useRankedSignals";
 import { ThumbsUp } from "lucide-react";
 import { useActiveCoachingPlan } from "@/hooks/useActiveCoachingPlan";
 import { useRecognizeAndCloseLoop } from "@/hooks/useRecognizeAndCloseLoop";
@@ -119,7 +119,7 @@ const recentSignals = [
 const ControlTower = () => {
   const { data: metrics, isLoading, error } = useDashboardMetrics();
   const { data: signalsSummary, isLoading: signalsLoading } = usePersonSignalsSummary();
-  const { data: individualSignals, isLoading: individualSignalsLoading } = useIndividualRecentSignals();
+  const { data: individualSignals, isLoading: individualSignalsLoading } = useRankedSignals();
   const { data: riskTrend, isLoading: riskTrendLoading } = useRiskTrend();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -735,25 +735,15 @@ const SignalActionButton = ({
   onEvaluateClick: () => void; 
   onCoachClick: () => void; 
 }) => {
-  const { data: safeguards } = useReleaseSafeguards(signal.person_id);
-  const { data: activeCoaching } = useActiveCoachingPlan(signal.person_id);
   const recognizeAndCloseLoop = useRecognizeAndCloseLoop();
   
   if (signal.action_type === 'release') {
-    // Release evaluation button - disable only if tenure < 21 days OR evidence < 3 in last 14 days
-    const canRelease = safeguards?.tenure_ok && safeguards?.data_ok;
-    
     return (
       <Button 
         variant="outline"
         size="sm"
-        disabled={!canRelease}
-        className={`shadow-soft transition-all duration-200 ${
-          canRelease 
-            ? 'hover:shadow-dashboard hover:scale-105 bg-purple-500/10 border-purple-500/20 text-purple-600 hover:bg-purple-500/20'
-            : 'cursor-not-allowed opacity-50'
-        }`}
-        onClick={canRelease ? onEvaluateClick : undefined}
+        className="shadow-soft hover:shadow-dashboard transition-all duration-200 hover:scale-105 bg-purple-500/10 border-purple-500/20 text-purple-600 hover:bg-purple-500/20"
+        onClick={onEvaluateClick}
       >
         <UserCheck className="h-4 w-4 mr-2" />
         Evaluate for Release
@@ -762,20 +752,12 @@ const SignalActionButton = ({
   }
   
   if (signal.action_type === 'coach') {
-    // Auto-coaching button - disable only if active coaching plan exists
-    const canCoach = !activeCoaching;
-    
     return (
       <Button 
         variant="outline"
         size="sm"
-        disabled={!canCoach}
-        className={`shadow-soft transition-all duration-200 ${
-          canCoach 
-            ? 'hover:shadow-dashboard hover:scale-105 bg-blue-500/10 border-blue-500/20 text-blue-600 hover:bg-blue-500/20'
-            : 'cursor-not-allowed opacity-50'
-        }`}
-        onClick={canCoach ? onCoachClick : undefined}
+        className="shadow-soft hover:shadow-dashboard transition-all duration-200 hover:scale-105 bg-blue-500/10 border-blue-500/20 text-blue-600 hover:bg-blue-500/20"
+        onClick={onCoachClick}
       >
         <Bot className="h-4 w-4 mr-2" />
         Start Auto-Coach
@@ -784,7 +766,6 @@ const SignalActionButton = ({
   }
   
   if (signal.action_type === 'kudos') {
-    // Recognize & Close Loop button
     return (
       <Button 
         variant="outline"
