@@ -10,6 +10,7 @@ export interface SignalData {
   reason: string;
   score_delta: number | null;
   person_id: string;
+  action_type?: 'release' | 'coach' | 'kudos' | 'none';
 }
 
 interface UseSignalsDataProps {
@@ -30,6 +31,7 @@ export const useSignalsData = ({ levelFilter, startDate, endDate, multipleLevels
           ts,
           level,
           reason,
+          score_delta,
           person_id,
           person!inner (
             name,
@@ -66,10 +68,18 @@ export const useSignalsData = ({ levelFilter, startDate, endDate, multipleLevels
         email: signal.person.email,
         level: signal.level,
         reason: signal.reason,
-        score_delta: null, // Will be added once migration is approved
-        person_id: signal.person_id
+        score_delta: signal.score_delta,
+        person_id: signal.person_id,
+        action_type: getActionType(signal.level)
       }));
     },
     refetchInterval: 30000, // Refresh every 30 seconds
   });
 };
+
+function getActionType(level: string): 'release' | 'coach' | 'kudos' | 'none' {
+  if (level === 'risk' || level === 'critical') return 'release';
+  if (level === 'warning' || level === 'warn') return 'coach';
+  if (level === 'info') return 'kudos';
+  return 'none';
+}
