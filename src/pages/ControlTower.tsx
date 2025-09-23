@@ -480,7 +480,7 @@ const ControlTower = () => {
               <CardHeader className="pb-4">
                 <CardTitle className="text-lg font-semibold text-foreground flex items-center">
                   <Activity className="mr-2 h-4 w-4 text-primary" />
-                  Risk Half-Life (coaching impact)
+                  How Fast Risks Decay After Coaching
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -500,7 +500,10 @@ const ControlTower = () => {
                 ) : (
                   <div className="h-64">
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={riskTrend} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                      <LineChart data={riskTrend.map(item => ({
+                        ...item,
+                        cohort_median: metrics?.cohortMedianRiskScore || 4.0
+                      }))} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
                         <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
                         <XAxis 
                           dataKey="day" 
@@ -513,7 +516,15 @@ const ControlTower = () => {
                         />
                         <Tooltip 
                           labelFormatter={(value) => `Date: ${new Date(value).toLocaleDateString()}`}
-                          formatter={(value) => [`${value}`, 'Avg Risk Score']}
+                          formatter={(value, name) => {
+                            if (name === 'Avg Risk Score') {
+                              return [`${value}`, 'Risk Score'];
+                            }
+                            if (name === 'Cohort Median') {
+                              return [`${value}`, 'Cohort Median'];
+                            }
+                            return [`${value}`, name];
+                          }}
                           contentStyle={{ 
                             backgroundColor: 'hsl(var(--background))', 
                             border: '1px solid hsl(var(--border))',
@@ -528,6 +539,16 @@ const ControlTower = () => {
                           dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2, r: 4 }}
                           activeDot={{ r: 6, stroke: 'hsl(var(--primary))', strokeWidth: 2 }}
                           name="Avg Risk Score"
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="cohort_median" 
+                          stroke="hsl(var(--muted-foreground))" 
+                          strokeWidth={2}
+                          strokeDasharray="5 5"
+                          dot={{ fill: 'hsl(var(--muted-foreground))', strokeWidth: 2, r: 3 }}
+                          activeDot={{ r: 5, stroke: 'hsl(var(--muted-foreground))', strokeWidth: 2 }}
+                          name="Cohort Median"
                         />
                       </LineChart>
                     </ResponsiveContainer>
