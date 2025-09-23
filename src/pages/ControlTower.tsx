@@ -403,10 +403,38 @@ const ControlTower = () => {
                 <CardContent>
                   <div className="space-y-3">
                     {[
-                      { system: "Risk Detection Engine", status: "Active", processes: "247 signals processed", type: "success", icon: AlertTriangle },
-                      { system: "Auto-Coach Generator", status: "Active", processes: "56 coaching sessions", type: "success", icon: Bot },
-                      { system: "Performance Analyzer", status: "Training", processes: "Learning new patterns", type: "warning", icon: Activity },
-                      { system: "Workflow Automation", status: "Active", processes: "23 workflows triggered", type: "success", icon: CheckCircle }
+                      { 
+                        system: "Risk Detection Engine", 
+                        subtitle: "Replaces daily stand-up check-ins",
+                        status: "Active", 
+                        processes: "247 signals processed", 
+                        type: "success", 
+                        icon: AlertTriangle 
+                      },
+                      { 
+                        system: "Auto-Coach Generator", 
+                        subtitle: "Replaces 1:1 performance reviews",
+                        status: "Active", 
+                        processes: "56 coaching sessions", 
+                        type: "success", 
+                        icon: Bot 
+                      },
+                      { 
+                        system: "Performance Analyzer", 
+                        subtitle: "Measures loop success, not manager opinion",
+                        status: "Training", 
+                        processes: "Learning new patterns", 
+                        type: "warning", 
+                        icon: Activity 
+                      },
+                      { 
+                        system: "Workflow Automation", 
+                        subtitle: "Executes offboarding without manual HR",
+                        status: "Active", 
+                        processes: "23 workflows triggered", 
+                        type: "success", 
+                        icon: CheckCircle 
+                      }
                     ].map((automation, index) => (
                       <div key={index} className="flex items-center justify-between p-3 bg-accent/50 rounded-lg hover:bg-accent transition-colors">
                         <div className="flex items-center space-x-3">
@@ -421,6 +449,7 @@ const ControlTower = () => {
                           </div>
                           <div>
                             <p className="font-semibold text-foreground">{automation.system}</p>
+                            <p className="text-xs text-muted-foreground italic mb-1">{automation.subtitle}</p>
                             <p className="text-sm text-muted-foreground">{automation.processes}</p>
                           </div>
                         </div>
