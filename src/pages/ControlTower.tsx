@@ -34,6 +34,7 @@ import { usePersonSignalsSummary } from "@/hooks/usePersonSignalsSummary";
 import { useIndividualRecentSignals } from "@/hooks/useIndividualRecentSignals";
 import { useReleaseSafeguards } from "@/hooks/useReleaseSafeguards";
 import { useActiveCoachingPlan } from "@/hooks/useActiveCoachingPlan";
+import { useRecognizeAndCloseLoop } from "@/hooks/useRecognizeAndCloseLoop";
 import { useRefreshDemoData } from "@/hooks/useRefreshDemoData";
 import { ReleaseEvaluationModal } from "@/components/ReleaseEvaluationModal";
 import { AutoCoachModal } from "@/components/AutoCoachModal";
@@ -665,25 +666,23 @@ const ControlTower = () => {
                                 </div>
                               </div>
                              )}
-                             {signal.level !== 'info' && (
-                               <SignalActionButton 
-                                 signal={signal}
-                                 onEvaluateClick={() => {
-                                   setSelectedPersonId(signal.person_id);
-                                   setSelectedPersonName(signal.person);
-                                   setSelectedSignalId(signal.id);
-                                   setSelectedReason(signal.reason);
-                                   setModalOpen(true);
-                                 }}
-                                 onCoachClick={() => {
-                                   setSelectedPersonId(signal.person_id);
-                                   setSelectedPersonName(signal.person);
-                                   setSelectedSignalId(signal.id);
-                                   setSelectedReason(signal.reason);
-                                   setAutoCoachModalOpen(true);
-                                 }}
-                               />
-                             )}
+                             <SignalActionButton 
+                               signal={signal}
+                               onEvaluateClick={() => {
+                                 setSelectedPersonId(signal.person_id);
+                                 setSelectedPersonName(signal.person);
+                                 setSelectedSignalId(signal.id);
+                                 setSelectedReason(signal.reason);
+                                 setModalOpen(true);
+                               }}
+                               onCoachClick={() => {
+                                 setSelectedPersonId(signal.person_id);
+                                 setSelectedPersonName(signal.person);
+                                 setSelectedSignalId(signal.id);
+                                 setSelectedReason(signal.reason);
+                                 setAutoCoachModalOpen(true);
+                               }}
+                             />
                            </div>
                          </div>
                        );
@@ -730,18 +729,13 @@ const SignalActionButton = ({
 }) => {
   const { data: safeguards } = useReleaseSafeguards(signal.person_id);
   const { data: activeCoaching } = useActiveCoachingPlan(signal.person_id);
-  
-  const canRelease = safeguards?.tenure_ok && safeguards?.data_ok && safeguards?.coach_ok;
-  const canCoach = !activeCoaching; // Can only start coaching if no active plan
+  const recognizeAndCloseLoop = useRecognizeAndCloseLoop();
   
   if (signal.level === 'critical' || signal.level === 'risk') {
-    // Release evaluation button
+    // Release evaluation button - disable only if tenure_ok=false OR data_ok=false
+    const canRelease = safeguards?.tenure_ok && safeguards?.data_ok;
+    
     if (!canRelease) {
-      const unmetChecks = [];
-      if (!safeguards?.tenure_ok) unmetChecks.push("90+ days tenure required");
-      if (!safeguards?.data_ok) unmetChecks.push("Need 3+ data points in last 30 days");
-      if (!safeguards?.coach_ok) unmetChecks.push("No completed coaching cycles");
-      
       return (
         <Tooltip>
           <TooltipTrigger asChild>
@@ -757,10 +751,7 @@ const SignalActionButton = ({
           </TooltipTrigger>
           <TooltipContent>
             <div className="text-xs">
-              <div className="font-semibold mb-1">Unmet safeguards:</div>
-              {unmetChecks.map((check, idx) => (
-                <div key={idx}>• {check}</div>
-              ))}
+              Needs 21d tenure and 14d evidence.
             </div>
           </TooltipContent>
         </Tooltip>
@@ -775,11 +766,13 @@ const SignalActionButton = ({
         onClick={onEvaluateClick}
       >
         <UserCheck className="h-4 w-4 mr-2" />
-        Evaluate
+        Evaluate for Release
       </Button>
     );
-  } else {
-    // Coaching button
+  } else if (signal.level === 'warn' || signal.level === 'warning') {
+    // Auto-coaching button - disable only if active coaching plan exists
+    const canCoach = !activeCoaching;
+    
     if (!canCoach) {
       return (
         <Tooltip>
@@ -805,16 +798,32 @@ const SignalActionButton = ({
     
     return (
       <Button 
-        variant="outline"
+        variant="gradient"
         size="sm"
         className="shadow-soft hover:shadow-dashboard transition-all duration-200 hover:scale-105"
         onClick={onCoachClick}
       >
-        <Play className="h-4 w-4 mr-2" />
-        Coach
+        <Bot className="h-4 w-4 mr-2" />
+        Start Auto-Coach
+      </Button>
+    );
+  } else if (signal.level === 'info') {
+    // Recognize & Close Loop button
+    return (
+      <Button 
+        variant="gradient"
+        size="sm"
+        className="shadow-soft hover:shadow-dashboard transition-all duration-200 hover:scale-105"
+        onClick={() => recognizeAndCloseLoop.mutate({ personId: signal.person_id })}
+        disabled={recognizeAndCloseLoop.isPending}
+      >
+        <CheckCircle className="h-4 w-4 mr-2" />
+        {recognizeAndCloseLoop.isPending ? 'Processing...' : 'Recognize & Close Loop'}
       </Button>
     );
   }
+  
+  return null;
 };
 
 export default ControlTower;
