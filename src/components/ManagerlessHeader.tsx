@@ -5,9 +5,11 @@ import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
+import SearchCommand from "./SearchCommand";
 
 const ManagerlessHeader = () => {
   const [searchFocused, setSearchFocused] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -32,16 +34,30 @@ const ManagerlessHeader = () => {
             <Command className="absolute right-3 top-3 h-4 w-4 text-muted-foreground opacity-50" />
             <Input
               placeholder="Search signals, people, workflows... (⌘K)"
-              className={`pl-10 pr-10 bg-background/80 border-border backdrop-blur-sm transition-all duration-300 ${
+              className={`pl-10 pr-10 bg-background/80 border-border backdrop-blur-sm transition-all duration-300 cursor-pointer ${
                 searchFocused ? 'shadow-dashboard border-primary/50' : 'hover:shadow-soft'
               }`}
-              onFocus={() => setSearchFocused(true)}
-              onBlur={() => setSearchFocused(false)}
+              onClick={() => setSearchOpen(true)}
+              onFocus={(e) => {
+                e.target.blur();
+                setSearchOpen(true);
+              }}
+              readOnly
             />
           </div>
         </div>
 
         <div className="flex items-center space-x-3">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="md:hidden hover-lift hover:bg-primary/10"
+            onClick={() => setSearchOpen(true)}
+            aria-label="Search"
+          >
+            <Search className="h-5 w-5" />
+          </Button>
+          
           <Button 
             variant="ghost" 
             size="icon" 
@@ -94,6 +110,8 @@ const ManagerlessHeader = () => {
           </Button>
         </div>
       </div>
+      
+      <SearchCommand open={searchOpen} setOpen={setSearchOpen} />
     </header>
   );
 };
