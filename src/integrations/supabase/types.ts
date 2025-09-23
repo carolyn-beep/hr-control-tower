@@ -266,6 +266,26 @@ export type Database = {
       }
     }
     Functions: {
+      get_coaching_history: {
+        Args: { target_person_id: string }
+        Returns: {
+          created_at: string
+          id: string
+          objective: string
+          playbook: string
+          status: string
+        }[]
+      }
+      get_evidence: {
+        Args: { target_person_id: string }
+        Returns: {
+          benchmark: number
+          kpi: string
+          source_link: string
+          time_window: string
+          value: number
+        }[]
+      }
       get_performance_evidence: {
         Args: { target_person_id: string }
         Returns: {
@@ -274,6 +294,35 @@ export type Database = {
           source_link: string
           time_window: string
           value: number
+        }[]
+      }
+      get_person_profile: {
+        Args: { target_person_id: string }
+        Returns: {
+          created_at: string
+          department: string
+          email: string
+          id: string
+          name: string
+          risk_score: number
+        }[]
+      }
+      insert_release_case: {
+        Args: {
+          calculated_risk_score: number
+          decision_reason: string
+          evidence_data: Json
+          target_person_id: string
+        }
+        Returns: string
+      }
+      release_safeguards: {
+        Args: { target_person_id: string }
+        Returns: {
+          coach_ok: boolean
+          data_ok: boolean
+          messages: string[]
+          tenure_ok: boolean
         }[]
       }
       update_release_case_status: {

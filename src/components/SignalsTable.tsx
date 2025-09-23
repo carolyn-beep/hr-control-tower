@@ -8,14 +8,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Filter, Loader2 } from "lucide-react";
+import { CalendarIcon, Filter, Loader2, UserCheck } from "lucide-react";
 import { useSignalsData } from "@/hooks/useSignalsData";
+import { ReleaseEvaluationModal } from "@/components/ReleaseEvaluationModal";
 import { cn } from "@/lib/utils";
 
 const SignalsTable = () => {
   const [levelFilter, setLevelFilter] = useState<string>('all');
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
+  const [selectedPersonId, setSelectedPersonId] = useState<string>('');
+  const [selectedPersonName, setSelectedPersonName] = useState<string>('');
+  const [modalOpen, setModalOpen] = useState(false);
 
   const { data: signals, isLoading, error } = useSignalsData({
     levelFilter: levelFilter,
@@ -156,6 +160,7 @@ const SignalsTable = () => {
                   <TableHead>Level</TableHead>
                   <TableHead>Reason</TableHead>
                   <TableHead className="text-right">Score Delta</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -192,6 +197,20 @@ const SignalsTable = () => {
                         <span className="text-muted-foreground">—</span>
                       )}
                     </TableCell>
+                    <TableCell className="text-right">
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => {
+                          setSelectedPersonId(signal.person_id);
+                          setSelectedPersonName(signal.person);
+                          setModalOpen(true);
+                        }}
+                      >
+                        <UserCheck className="h-4 w-4 mr-2" />
+                        Evaluate for Release
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -203,6 +222,13 @@ const SignalsTable = () => {
           )}
         </CardContent>
       </Card>
+      
+      <ReleaseEvaluationModal
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        personId={selectedPersonId}
+        personName={selectedPersonName}
+      />
     </div>
   );
 };

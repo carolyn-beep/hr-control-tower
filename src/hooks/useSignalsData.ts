@@ -9,6 +9,7 @@ export interface SignalData {
   level: string;
   reason: string;
   score_delta: number | null;
+  person_id: string;
 }
 
 interface UseSignalsDataProps {
@@ -28,6 +29,7 @@ export const useSignalsData = ({ levelFilter, startDate, endDate }: UseSignalsDa
           ts,
           level,
           reason,
+          person_id,
           person!inner (
             name,
             email
@@ -61,7 +63,8 @@ export const useSignalsData = ({ levelFilter, startDate, endDate }: UseSignalsDa
         email: signal.person.email,
         level: signal.level,
         reason: signal.reason,
-        score_delta: null // Will be added once migration is approved
+        score_delta: null, // Will be added once migration is approved
+        person_id: signal.person_id
       }));
     },
     refetchInterval: 30000, // Refresh every 30 seconds
