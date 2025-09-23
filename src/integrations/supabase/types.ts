@@ -115,6 +115,7 @@ export type Database = {
           level: string
           person_id: string
           reason: string
+          score_delta: number | null
           ts: string
         }
         Insert: {
@@ -123,6 +124,7 @@ export type Database = {
           level: string
           person_id: string
           reason: string
+          score_delta?: number | null
           ts?: string
         }
         Update: {
@@ -131,6 +133,7 @@ export type Database = {
           level?: string
           person_id?: string
           reason?: string
+          score_delta?: number | null
           ts?: string
         }
         Relationships: [
