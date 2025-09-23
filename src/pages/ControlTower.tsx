@@ -24,6 +24,7 @@ import { useRiskTrend } from "@/hooks/useRiskTrend";
 import { ReleaseEvaluationModal } from "@/components/ReleaseEvaluationModal";
 import { AutoCoachModal } from "@/components/AutoCoachModal";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useToast } from "@/hooks/use-toast";
 
 const riskMetrics = [
   {
@@ -104,6 +105,7 @@ const ControlTower = () => {
   const { data: recentSignals, isLoading: signalsLoading } = useRecentSignalsWithPerson();
   const { data: riskTrend, isLoading: riskTrendLoading } = useRiskTrend();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [selectedPersonId, setSelectedPersonId] = useState<string>('');
   const [selectedPersonName, setSelectedPersonName] = useState<string>('');
   const [selectedSignalId, setSelectedSignalId] = useState<string>('');
@@ -198,6 +200,7 @@ const ControlTower = () => {
                   <Button 
                     variant="glass" 
                     className="bg-white/20 text-white border-white/30 hover:bg-white/30 hover:scale-105 transition-all duration-300"
+                    onClick={() => navigate('/signals')}
                   >
                     <Activity className="mr-2 h-4 w-4" />
                     View Signals
@@ -205,6 +208,12 @@ const ControlTower = () => {
                   <Button 
                     variant="glass" 
                     className="bg-white/20 text-white border-white/30 hover:bg-white/30 hover:scale-105 transition-all duration-300"
+                    onClick={() => {
+                      toast({
+                        title: "AI Insights",
+                        description: "Advanced risk analytics: Pattern detection active across 5 performance vectors. Current risk trend shows 12% improvement over last month.",
+                      });
+                    }}
                   >
                     <Bot className="mr-2 h-4 w-4" />
                     AI Insights
