@@ -18,7 +18,11 @@ import {
   Play,
   RefreshCw,
   ArrowUp,
-  ArrowDown
+  ArrowDown,
+  MessageCircle,
+  LogOut,
+  LineChart as LineChartIcon,
+  FileText
 } from "lucide-react";
 import heroImage from "@/assets/hr-hero.jpg";
 import { useDashboardMetrics } from "@/hooks/useDashboardMetrics";
@@ -335,8 +339,16 @@ const ControlTower = () => {
                       });
                     }}
                   >
-                    <Bot className="mr-2 h-4 w-4 group-hover:scale-110 transition-transform" />
+                    <MessageCircle className="mr-2 h-4 w-4 group-hover:scale-110 transition-transform" />
                     <span className="font-medium">Launch Auto-Coach</span>
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start hover:bg-primary/5 group h-10"
+                    onClick={() => setModalOpen(true)}
+                  >
+                    <LogOut className="mr-2 h-4 w-4 group-hover:scale-110 transition-transform" />
+                    <span className="font-medium">Evaluate for Release</span>
                   </Button>
                   <Button 
                     variant="outline" 
@@ -348,7 +360,7 @@ const ControlTower = () => {
                       });
                     }}
                   >
-                    <Activity className="mr-2 h-4 w-4 group-hover:scale-110 transition-transform" />
+                    <LineChartIcon className="mr-2 h-4 w-4 group-hover:scale-110 transition-transform" />
                     <span className="font-medium">Analyze Trends</span>
                   </Button>
                   <Button 
@@ -361,7 +373,7 @@ const ControlTower = () => {
                       });
                     }}
                   >
-                    <TrendingUp className="mr-2 h-4 w-4 group-hover:scale-110 transition-transform" />
+                    <FileText className="mr-2 h-4 w-4 group-hover:scale-110 transition-transform" />
                     <span className="font-medium">Generate Report</span>
                   </Button>
                   <Button 
