@@ -8,10 +8,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Filter, Loader2, UserCheck, AlertTriangle, Activity } from "lucide-react";
+import { CalendarIcon, Filter, Loader2, UserCheck, AlertTriangle, Activity, MoreHorizontal, Bot, FileText, Eye, Clock as ClockIcon, CheckCircle2 } from "lucide-react";
 import { useSignalsData } from "@/hooks/useSignalsData";
 import { ReleaseEvaluationModal } from "@/components/ReleaseEvaluationModal";
-import { useSearchParams } from "react-router-dom";
+import { AutoCoachModal } from "@/components/AutoCoachModal";
+import { EvidenceModal } from "@/components/EvidenceModal";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
 const SignalsTable = () => {
@@ -37,8 +42,13 @@ const SignalsTable = () => {
   const [endDate, setEndDate] = useState<Date>();
   const [selectedPersonId, setSelectedPersonId] = useState<string>('');
   const [selectedPersonName, setSelectedPersonName] = useState<string>('');
+  const [selectedSignalReason, setSelectedSignalReason] = useState<string>('');
   const [modalOpen, setModalOpen] = useState(false);
-
+  const [autoCoachOpen, setAutoCoachOpen] = useState(false);
+  const [evidenceOpen, setEvidenceOpen] = useState(false);
+  const [evidenceData, setEvidenceData] = useState<any>(null);
+  const navigate = useNavigate();
+  const { toast } = useToast();
   // Modify levelFilter for API call
   const getApiLevelFilter = () => {
     if (levelFilter === 'risk_critical') {
