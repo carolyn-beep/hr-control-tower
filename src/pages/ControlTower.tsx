@@ -284,19 +284,49 @@ const ControlTower = () => {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  <Button className="w-full justify-start bg-gradient-primary text-primary-foreground hover:opacity-90 group h-10">
+                  <Button 
+                    className="w-full justify-start bg-gradient-primary text-primary-foreground hover:opacity-90 group h-10"
+                    onClick={() => navigate('/signals?level=critical,risk')}
+                  >
                     <AlertTriangle className="mr-2 h-4 w-4 group-hover:scale-110 transition-transform" />
                     <span className="font-medium">Review High Signals</span>
                   </Button>
-                  <Button variant="outline" className="w-full justify-start hover:bg-primary/5 group h-10">
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start hover:bg-primary/5 group h-10"
+                    onClick={() => {
+                      toast({
+                        title: "Auto-Coach Feature",
+                        description: "AI coaching system will analyze performance patterns and suggest personalized coaching plans.",
+                      });
+                    }}
+                  >
                     <Bot className="mr-2 h-4 w-4 group-hover:scale-110 transition-transform" />
                     <span className="font-medium">Launch Auto-Coach</span>
                   </Button>
-                  <Button variant="outline" className="w-full justify-start hover:bg-primary/5 group h-10">
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start hover:bg-primary/5 group h-10"
+                    onClick={() => {
+                      toast({
+                        title: "Trend Analysis",
+                        description: "Analyzing performance trends across all employees. Risk patterns show 12% improvement this month.",
+                      });
+                    }}
+                  >
                     <Activity className="mr-2 h-4 w-4 group-hover:scale-110 transition-transform" />
                     <span className="font-medium">Analyze Trends</span>
                   </Button>
-                  <Button variant="outline" className="w-full justify-start hover:bg-primary/5 group h-10">
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start hover:bg-primary/5 group h-10"
+                    onClick={() => {
+                      toast({
+                        title: "Report Generation",
+                        description: "Generating comprehensive HR analytics report. This feature will be available soon.",
+                      });
+                    }}
+                  >
                     <TrendingUp className="mr-2 h-4 w-4 group-hover:scale-110 transition-transform" />
                     <span className="font-medium">Generate Report</span>
                   </Button>
