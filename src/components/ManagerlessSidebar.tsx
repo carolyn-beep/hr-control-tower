@@ -4,7 +4,6 @@ import {
   Activity, 
   GitBranch,
   AlertTriangle,
-  TrendingUp,
   Bot,
   Zap
 } from "lucide-react";
@@ -67,21 +66,6 @@ const ManagerlessSidebar = () => {
               </div>
             </div>
           </div>
-        </div>
-      </div>
-      
-      <div className="absolute bottom-6 left-6 right-6">
-        <div className="bg-gradient-card p-4 rounded-lg border border-border">
-          <div className="flex items-center space-x-2 mb-2">
-            <TrendingUp className="h-4 w-4 text-success" />
-            <h4 className="font-semibold text-foreground">System Health</h4>
-          </div>
-          <p className="text-sm text-success mb-3">
-            All systems operational
-          </p>
-          <Button size="sm" variant="outline" className="w-full">
-            View Details
-          </Button>
         </div>
       </div>
     </aside>
