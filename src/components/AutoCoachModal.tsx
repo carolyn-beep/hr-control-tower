@@ -24,8 +24,8 @@ interface KPISnapshot {
 }
 
 interface CoachBotResult {
-  short_dm: string;
-  plan_bullets: string[];
+  message: string;
+  steps: string[];
 }
 
 interface AutoCoachModalProps {
@@ -107,36 +107,35 @@ export const AutoCoachModal = ({ open, onOpenChange, personId, personName, signa
 
   const callCoachBot = async (profile: PersonProfile, kpis: KPISnapshot[]) => {
     try {
-      const payload = {
-        name: profile.name,
-        role: profile.department || 'Team Member',
-        kpi_snapshot: kpis,
-        signal_context: {
-          signal_id: signalId,
-          reason: reason
-        },
-        coaching_directive: "Generate a supportive coaching plan to address performance gaps and enhance engagement."
-      };
+      const { data, error } = await supabase.functions.invoke('coach-bot', {
+        body: {
+          person: {
+            name: profile.name,
+            role: profile.department || 'Team Member'
+          },
+          kpiData: kpis
+        }
+      });
 
-      // Mock CoachBot response for now - in real implementation, you'd call your AI endpoint
-      const mockCoachResult: CoachBotResult = {
-        short_dm: `Hi ${profile.name}, I've noticed some areas where we can help you succeed even more. Let's work together on a focused improvement plan that builds on your strengths.`,
-        plan_bullets: [
-          "Weekly 1:1 check-ins to discuss progress and challenges",
-          "Skill development in key performance areas identified",
-          "Peer mentorship pairing for collaborative learning",
-          "Clear milestone tracking with regular feedback loops",
-          "Resource access for professional development tools"
-        ]
-      };
-
-      setCoachResult(mockCoachResult);
+      if (error) throw error;
+      
+      setCoachResult(data);
     } catch (error) {
       console.error('Error calling CoachBot:', error);
       toast({
         title: "Error",
         description: "Failed to generate coaching plan. Please try again.",
         variant: "destructive",
+      });
+      
+      // Fallback response in case of error
+      setCoachResult({
+        message: `Hi ${profile.name}, I encountered an issue generating your coaching plan. Please try again or contact support.`,
+        steps: [
+          "Review recent project deliverables",
+          "Schedule a performance review with your manager",
+          "Focus on completing current sprint goals"
+        ]
       });
     }
   };
@@ -150,8 +149,8 @@ export const AutoCoachModal = ({ open, onOpenChange, personId, personName, signa
         .from('coaching_plan')
         .insert({
           person_id: personId,
-          objective: coachResult.short_dm,
-          playbook: coachResult.plan_bullets.join('\n• ')
+          objective: coachResult.message,
+          playbook: coachResult.steps.join('\n• ')
         })
         .select()
         .single();
@@ -261,7 +260,7 @@ export const AutoCoachModal = ({ open, onOpenChange, personId, personName, signa
                   </CardHeader>
                   <CardContent>
                     <div className="bg-muted p-3 rounded text-sm">
-                      {coachResult.short_dm}
+                      {coachResult.message}
                     </div>
                   </CardContent>
                 </Card>
@@ -273,10 +272,10 @@ export const AutoCoachModal = ({ open, onOpenChange, personId, personName, signa
                   </CardHeader>
                   <CardContent>
                     <ul className="space-y-2">
-                      {coachResult.plan_bullets.map((bullet, index) => (
+                      {coachResult.steps.map((step, index) => (
                         <li key={index} className="flex items-start gap-2">
                           <span className="text-primary">•</span>
-                          <span className="text-sm">{bullet}</span>
+                          <span className="text-sm">{step}</span>
                         </li>
                       ))}
                     </ul>
