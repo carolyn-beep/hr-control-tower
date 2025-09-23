@@ -100,6 +100,8 @@ const ControlTower = () => {
   const { data: recentSignals, isLoading: signalsLoading } = useRecentSignalsWithPerson();
   const [selectedPersonId, setSelectedPersonId] = useState<string>('');
   const [selectedPersonName, setSelectedPersonName] = useState<string>('');
+  const [selectedSignalId, setSelectedSignalId] = useState<string>('');
+  const [selectedReason, setSelectedReason] = useState<string>('');
   const [modalOpen, setModalOpen] = useState(false);
 
   // Create dynamic risk metrics based on real data
@@ -385,6 +387,8 @@ const ControlTower = () => {
                             onClick={() => {
                               setSelectedPersonId(signal.person_id);
                               setSelectedPersonName(signal.person);
+                              setSelectedSignalId(signal.id);
+                              setSelectedReason(signal.reason);
                               setModalOpen(true);
                             }}
                           >
@@ -407,6 +411,8 @@ const ControlTower = () => {
         onOpenChange={setModalOpen}
         personId={selectedPersonId}
         personName={selectedPersonName}
+        signalId={selectedSignalId}
+        reason={selectedReason}
       />
     </div>
   );

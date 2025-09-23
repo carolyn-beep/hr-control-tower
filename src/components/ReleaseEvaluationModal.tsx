@@ -54,9 +54,11 @@ interface ReleaseEvaluationModalProps {
   onOpenChange: (open: boolean) => void;
   personId: string;
   personName: string;
+  signalId?: string;
+  reason?: string;
 }
 
-export const ReleaseEvaluationModal = ({ open, onOpenChange, personId, personName }: ReleaseEvaluationModalProps) => {
+export const ReleaseEvaluationModal = ({ open, onOpenChange, personId, personName, signalId, reason }: ReleaseEvaluationModalProps) => {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [personProfile, setPersonProfile] = useState<PersonProfile | null>(null);
@@ -132,6 +134,10 @@ export const ReleaseEvaluationModal = ({ open, onOpenChange, personId, personNam
         evidence_table: evidenceData,
         coaching_history: coachingData,
         risk_score: profile.risk_score,
+        signal_context: {
+          signal_id: signalId,
+          reason: reason
+        },
         policy_excerpt: "Decisions require objective evidence and at least 1 completed coaching loop unless severe breach."
       };
 
@@ -269,6 +275,11 @@ export const ReleaseEvaluationModal = ({ open, onOpenChange, personId, personNam
                     <div><strong>Department:</strong> {personProfile.department || 'N/A'}</div>
                     <div><strong>Risk Score:</strong> {personProfile.risk_score.toFixed(1)}</div>
                     <div><strong>Tenure:</strong> {format(new Date(personProfile.created_at), 'MMM dd, yyyy')}</div>
+                    {reason && (
+                      <div className="pt-2 border-t">
+                        <strong>Trigger Signal:</strong> {reason}
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div>No data available</div>
