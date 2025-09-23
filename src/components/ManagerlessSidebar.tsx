@@ -44,21 +44,19 @@ const ManagerlessSidebar = () => {
         <nav className="space-y-2 mb-8">
           <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Navigation</p>
           {navigationItems.map((item, index) => (
-            <NavLink 
-              key={index} 
-              to={item.path}
+            <Button
+              key={index}
+              asChild
+              variant={location.pathname === item.path ? "gradient" : "ghost"}
+              className={`w-full justify-start group relative transition-all duration-300 hover:translate-x-1 ${
+                location.pathname === item.path
+                  ? "shadow-glow" 
+                  : "hover:bg-accent hover:shadow-soft"
+              } h-12`}
               onMouseEnter={() => setHoveredItem(item.path)}
               onMouseLeave={() => setHoveredItem(null)}
-              className="block"
             >
-              <Button
-                variant={location.pathname === item.path ? "gradient" : "ghost"}
-                className={`w-full justify-start group relative transition-all duration-300 hover:translate-x-1 ${
-                  location.pathname === item.path
-                    ? "shadow-glow" 
-                    : "hover:bg-accent hover:shadow-soft"
-                } h-12`}
-              >
+              <NavLink to={item.path} className="flex items-center">
                 <item.icon className={`mr-3 h-5 w-5 transition-all duration-200 ${
                   location.pathname === item.path ? 'text-primary-foreground' : 'group-hover:scale-110'
                 }`} />
@@ -83,8 +81,8 @@ const ManagerlessSidebar = () => {
                     ? 'opacity-100 text-primary-foreground' 
                     : 'opacity-0 group-hover:opacity-100'
                 }`} />
-              </Button>
-            </NavLink>
+              </NavLink>
+            </Button>
           ))}
         </nav>
 
