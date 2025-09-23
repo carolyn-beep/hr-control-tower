@@ -20,6 +20,7 @@ import heroImage from "@/assets/hr-hero.jpg";
 import { useDashboardMetrics } from "@/hooks/useDashboardMetrics";
 import { useRecentSignalsWithPerson } from "@/hooks/useRecentSignalsWithPerson";
 import { ReleaseEvaluationModal } from "@/components/ReleaseEvaluationModal";
+import { AutoCoachModal } from "@/components/AutoCoachModal";
 
 const riskMetrics = [
   {
@@ -103,6 +104,7 @@ const ControlTower = () => {
   const [selectedSignalId, setSelectedSignalId] = useState<string>('');
   const [selectedReason, setSelectedReason] = useState<string>('');
   const [modalOpen, setModalOpen] = useState(false);
+  const [autoCoachModalOpen, setAutoCoachModalOpen] = useState(false);
 
   // Create dynamic risk metrics based on real data
   const riskMetrics = [
@@ -389,7 +391,12 @@ const ControlTower = () => {
                               setSelectedPersonName(signal.person);
                               setSelectedSignalId(signal.id);
                               setSelectedReason(signal.reason);
-                              setModalOpen(true);
+                              
+                              if (['risk', 'critical'].includes(signal.level.toLowerCase())) {
+                                setModalOpen(true);
+                              } else {
+                                setAutoCoachModalOpen(true);
+                              }
                             }}
                           >
                             {getButtonIcon(signal.level)}
@@ -409,6 +416,15 @@ const ControlTower = () => {
       <ReleaseEvaluationModal
         open={modalOpen}
         onOpenChange={setModalOpen}
+        personId={selectedPersonId}
+        personName={selectedPersonName}
+        signalId={selectedSignalId}
+        reason={selectedReason}
+      />
+      
+      <AutoCoachModal
+        open={autoCoachModalOpen}
+        onOpenChange={setAutoCoachModalOpen}
         personId={selectedPersonId}
         personName={selectedPersonName}
         signalId={selectedSignalId}
