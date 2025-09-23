@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import heroImage from "@/assets/hr-hero.jpg";
 import { useDashboardMetrics } from "@/hooks/useDashboardMetrics";
+import { useRecentSignals } from "@/hooks/useRecentSignals";
 
 const riskMetrics = [
   {
@@ -92,6 +93,7 @@ const recentSignals = [
 
 const ControlTower = () => {
   const { data: metrics, isLoading, error } = useDashboardMetrics();
+  const { data: recentSignals, isLoading: signalsLoading } = useRecentSignals();
 
   // Create dynamic risk metrics based on real data
   const riskMetrics = [
@@ -278,49 +280,86 @@ const ControlTower = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {recentSignals.map((signal, index) => (
-                    <div key={index} className="flex items-center justify-between p-4 bg-accent rounded-lg hover:bg-accent/80 transition-colors">
-                      <div className="flex items-center space-x-4">
-                        <div className={`w-3 h-3 rounded-full ${
-                          signal.severity === 'Critical' ? 'bg-destructive' :
-                          signal.severity === 'High' ? 'bg-warning' :
-                          signal.severity === 'Medium' ? 'bg-primary' : 'bg-muted-foreground'
-                        }`}></div>
-                        <div>
-                          <div className="flex items-center space-x-2">
-                            <span className="font-medium text-foreground">{signal.employee}</span>
-                            <span className="text-sm text-muted-foreground">•</span>
-                            <span className="text-sm text-foreground">{signal.signal}</span>
+                  {signalsLoading ? (
+                    <div className="text-center py-4 text-muted-foreground">Loading signals...</div>
+                  ) : !recentSignals || recentSignals.length === 0 ? (
+                    <div className="text-center py-4 text-muted-foreground">No recent signals</div>
+                  ) : (
+                    recentSignals.map((signal, index) => {
+                      // Calculate time ago
+                      const timeAgo = new Date(signal.ts);
+                      const now = new Date();
+                      const diffHours = Math.floor((now.getTime() - timeAgo.getTime()) / (1000 * 60 * 60));
+                      const timeString = diffHours < 1 ? "< 1h ago" : 
+                                       diffHours < 24 ? `${diffHours}h ago` : 
+                                       `${Math.floor(diffHours / 24)}d ago`;
+
+                      // Determine status based on level
+                      const getStatus = (level: string) => {
+                        switch(level) {
+                          case 'critical': return 'Manager Alert';
+                          case 'risk': return 'Auto-Coaching';
+                          case 'warning': return 'Monitoring';
+                          default: return 'Monitoring';
+                        }
+                      };
+
+                      const getSeverityColor = (level: string) => {
+                        switch(level) {
+                          case 'critical': return 'bg-destructive';
+                          case 'risk': return 'bg-warning';
+                          case 'warning': return 'bg-primary';
+                          default: return 'bg-muted-foreground';
+                        }
+                      };
+
+                      const getStatusColor = (level: string) => {
+                        switch(level) {
+                          case 'critical': return 'bg-destructive text-destructive-foreground';
+                          case 'risk': return 'bg-primary text-primary-foreground';
+                          default: return '';
+                        }
+                      };
+
+                      const getStatusIcon = (level: string) => {
+                        switch(level) {
+                          case 'critical': return <XCircle className="h-4 w-4 text-destructive" />;
+                          case 'risk': return <Clock className="h-4 w-4 text-warning" />;
+                          default: return <Clock className="h-4 w-4 text-primary" />;
+                        }
+                      };
+
+                      return (
+                        <div key={index} className="flex items-center justify-between p-4 bg-accent rounded-lg hover:bg-accent/80 transition-colors">
+                          <div className="flex items-center space-x-4">
+                            <div className={`w-3 h-3 rounded-full ${getSeverityColor(signal.level)}`}></div>
+                            <div>
+                              <div className="flex items-center space-x-2">
+                                <span className="font-medium text-foreground">{signal.name}</span>
+                                <span className="text-sm text-muted-foreground">•</span>
+                                <span className="text-sm text-foreground">{signal.reason}</span>
+                              </div>
+                              <div className="flex items-center space-x-2 mt-1">
+                                <Badge variant="outline" className="text-xs capitalize">
+                                  {signal.level}
+                                </Badge>
+                                <span className="text-xs text-muted-foreground">{timeString}</span>
+                              </div>
+                            </div>
                           </div>
-                          <div className="flex items-center space-x-2 mt-1">
-                            <Badge variant="outline" className="text-xs">
-                              {signal.severity}
+                          <div className="flex items-center space-x-3">
+                            <Badge 
+                              variant="secondary"
+                              className={getStatusColor(signal.level)}
+                            >
+                              {getStatus(signal.level)}
                             </Badge>
-                            <span className="text-xs text-muted-foreground">{signal.time}</span>
+                            {getStatusIcon(signal.level)}
                           </div>
                         </div>
-                      </div>
-                      <div className="flex items-center space-x-3">
-                        <Badge 
-                          variant={signal.action === 'resolved' ? 'default' : 'secondary'}
-                          className={`${
-                            signal.action === 'coaching' ? 'bg-primary text-primary-foreground' :
-                            signal.action === 'alert' ? 'bg-destructive text-destructive-foreground' :
-                            signal.action === 'resolved' ? 'bg-success text-success-foreground' : ''
-                          }`}
-                        >
-                          {signal.status}
-                        </Badge>
-                        {signal.action === 'resolved' ? (
-                          <CheckCircle className="h-4 w-4 text-success" />
-                        ) : signal.action === 'alert' ? (
-                          <XCircle className="h-4 w-4 text-destructive" />
-                        ) : (
-                          <Clock className="h-4 w-4 text-warning" />
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                      );
+                    })
+                  )}
                 </div>
               </CardContent>
             </Card>
