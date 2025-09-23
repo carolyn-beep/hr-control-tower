@@ -69,6 +69,8 @@ export const ReleaseEvaluationModal = ({ open, onOpenChange, personId, personNam
   const [emailCopied, setEmailCopied] = useState(false);
   const [checkedItems, setCheckedItems] = useState<boolean[]>([]);
   const [creatingCase, setCreatingCase] = useState(false);
+  const [insufficientData, setInsufficientData] = useState(false);
+  const [usingFallback, setUsingFallback] = useState(false);
 
   useEffect(() => {
     if (open && personId) {
@@ -111,6 +113,13 @@ export const ReleaseEvaluationModal = ({ open, onOpenChange, personId, personNam
         setSafeguards(safeguardData[0]);
       }
 
+      // Check for insufficient data first
+      if (!evidenceData || evidenceData.length === 0) {
+        setInsufficientData(true);
+        setAiResult(null);
+        return;
+      }
+
       // Call AI for evaluation
       if (profileData && profileData.length > 0) {
         await callReleaseBot(profileData[0], evidenceData || [], coachingData || []);
@@ -127,41 +136,114 @@ export const ReleaseEvaluationModal = ({ open, onOpenChange, personId, personNam
     }
   };
 
+  const computeRuleBasedDecision = (evidenceData: Evidence[]): AIResult => {
+    // Extract KPI values for rule-based logic
+    let prsPerWeek = 0;
+    let bugReopenRate = 0;
+    let leadTime = 0;
+
+    // Find relevant KPIs in evidence data
+    evidenceData.forEach(item => {
+      if (item.kpi.toLowerCase().includes('pr')) {
+        prsPerWeek = item.value * 2; // Convert from 2-week period to weekly
+      } else if (item.kpi.toLowerCase().includes('bug')) {
+        bugReopenRate = (item.value / item.benchmark) * 100; // Convert to percentage vs benchmark
+      } else if (item.kpi.toLowerCase().includes('lead')) {
+        leadTime = item.value;
+      }
+    });
+
+    // Apply rule-based decision logic
+    const shouldRelease = prsPerWeek < 2 && (bugReopenRate >= 15 || leadTime >= 60);
+    const decision = shouldRelease ? "release" : "extend_coaching";
+
+    // Generate rationale based on failing KPIs
+    const rationale: string[] = [];
+    
+    evidenceData.forEach(item => {
+      const performanceRatio = item.value / item.benchmark;
+      if (performanceRatio < 0.8) { // Significantly below benchmark
+        rationale.push(`${item.kpi}: ${item.value} (${(performanceRatio * 100).toFixed(0)}% of benchmark ${item.benchmark.toFixed(1)})`);
+      }
+    });
+
+    if (rationale.length === 0) {
+      rationale.push("Performance metrics are within acceptable ranges");
+    }
+
+    if (shouldRelease) {
+      rationale.push("Multiple performance indicators suggest coaching effectiveness is limited");
+    } else {
+      rationale.push("Performance issues are addressable through continued coaching support");
+    }
+
+    return {
+      decision,
+      rationale,
+      communication: `Hi ${personName},\n\nBased on our performance review, we've decided to ${decision === 'release' ? 'proceed with release from the program' : 'continue with the current coaching plan'}. ${decision === 'release' ? 'We believe this transition will best support your career development.' : 'Your recent data shows areas where continued support will help you reach your full potential.'}\n\nBest regards,\nHR Team`,
+      checklist: [
+        "Manager notified of decision",
+        decision === 'release' ? "Release documentation prepared" : "Coaching plan updated",
+        decision === 'release' ? "Transition plan created" : "Follow-up scheduled in 30 days",
+        "Performance metrics tracking enabled"
+      ]
+    };
+  };
+
   const callReleaseBot = async (profile: PersonProfile, evidenceData: Evidence[], coachingData: CoachingHistory[]) => {
     try {
-      const payload = {
-        person_profile: profile,
-        evidence_table: evidenceData,
-        coaching_history: coachingData,
-        risk_score: profile.risk_score,
-        signal_context: {
-          signal_id: signalId,
-          reason: reason
-        },
-        policy_excerpt: "Decisions require objective evidence and at least 1 completed coaching loop unless severe breach."
-      };
+      // First compute rule-based fallback
+      const fallbackResult = computeRuleBasedDecision(evidenceData);
 
-      // Mock AI response for now - in real implementation, you'd call your AI endpoint
-      const mockAiResult: AIResult = {
-        decision: evidenceData.length > 0 ? "extend_coaching" : "retain",
-        rationale: [
-          "Performance metrics show improvement trend",
-          "Coaching engagement is positive",
-          "Risk factors are manageable with continued support"
-        ],
-        communication: `Hi ${profile.name},\n\nFollowing our performance review, we've decided to continue with the current coaching plan. Your recent progress shows positive momentum, and we believe continued support will help you reach your full potential.\n\nBest regards,\nHR Team`,
-        checklist: [
-          "Manager notified of decision",
-          "Coaching plan updated",
-          "Follow-up scheduled in 30 days",
-          "Performance metrics tracking enabled"
-        ]
-      };
+      try {
+        const payload = {
+          person_profile: profile,
+          evidence_table: evidenceData,
+          coaching_history: coachingData,
+          risk_score: profile.risk_score,
+          signal_context: {
+            signal_id: signalId,
+            reason: reason
+          },
+          policy_excerpt: "Decisions require objective evidence and at least 1 completed coaching loop unless severe breach."
+        };
 
-      setAiResult(mockAiResult);
-      setCheckedItems(new Array(mockAiResult.checklist.length).fill(false));
+        // Mock AI response for now - in real implementation, you'd call your AI endpoint
+        // This simulates an AI call that might fail
+        const simulateAIFailure = Math.random() < 0.3; // 30% chance of failure for demo
+        
+        if (simulateAIFailure) {
+          throw new Error("AI service unavailable");
+        }
+
+        const mockAiResult: AIResult = {
+          decision: evidenceData.length > 0 ? "extend_coaching" : "retain",
+          rationale: [
+            "AI analysis indicates performance metrics show improvement potential",
+            "Coaching engagement patterns suggest positive response to intervention",
+            "Risk factors are manageable with structured support plan"
+          ],
+          communication: `Hi ${profile.name},\n\nFollowing our AI-powered performance review, we've decided to continue with the current coaching plan. Our analysis shows positive momentum indicators, and we believe continued support will help you reach your full potential.\n\nBest regards,\nHR Team`,
+          checklist: [
+            "Manager notified of AI-recommended decision",
+            "Coaching plan updated with AI insights",
+            "Follow-up scheduled in 30 days",
+            "Performance metrics tracking enabled"
+          ]
+        };
+
+        setAiResult(mockAiResult);
+        setUsingFallback(false);
+        setCheckedItems(new Array(mockAiResult.checklist.length).fill(false));
+      } catch (aiError) {
+        console.error('AI call failed, using rule-based fallback:', aiError);
+        // Use rule-based fallback if AI fails
+        setAiResult(fallbackResult);
+        setUsingFallback(true);
+        setCheckedItems(new Array(fallbackResult.checklist.length).fill(false));
+      }
     } catch (error) {
-      console.error('Error calling AI:', error);
+      console.error('Error in evaluation logic:', error);
     }
   };
 
@@ -348,12 +430,33 @@ export const ReleaseEvaluationModal = ({ open, onOpenChange, personId, personNam
                 <Loader2 className="h-8 w-8 animate-spin" />
                 <span className="ml-2">Evaluating...</span>
               </div>
+            ) : insufficientData ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Evaluation Status</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-8 space-y-4">
+                    <div className="text-warning text-lg font-semibold">⚠️ Insufficient Data</div>
+                    <p className="text-muted-foreground">
+                      No performance evidence available for evaluation. Please ensure the person has recent activity data before proceeding.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
             ) : aiResult ? (
               <>
                 {/* Decision */}
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg">AI Recommendation</CardTitle>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      {usingFallback ? "Rule-Based Recommendation" : "AI Recommendation"}
+                      {usingFallback && (
+                        <Badge variant="outline" className="text-xs">
+                          AI unavailable, using rules
+                        </Badge>
+                      )}
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <Badge variant={getDecisionBadgeVariant(aiResult.decision)} className="text-lg px-4 py-2">
@@ -450,7 +553,7 @@ export const ReleaseEvaluationModal = ({ open, onOpenChange, personId, personNam
           </Button>
           <Button 
             onClick={createReleaseCase}
-            disabled={!canCreateReleaseCase() || creatingCase}
+            disabled={!canCreateReleaseCase() || creatingCase || insufficientData}
           >
             {creatingCase ? (
               <>
