@@ -20,8 +20,10 @@ import {
 import heroImage from "@/assets/hr-hero.jpg";
 import { useDashboardMetrics } from "@/hooks/useDashboardMetrics";
 import { useRecentSignalsWithPerson } from "@/hooks/useRecentSignalsWithPerson";
+import { useRiskTrend } from "@/hooks/useRiskTrend";
 import { ReleaseEvaluationModal } from "@/components/ReleaseEvaluationModal";
 import { AutoCoachModal } from "@/components/AutoCoachModal";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 const riskMetrics = [
   {
@@ -100,6 +102,7 @@ const recentSignals = [
 const ControlTower = () => {
   const { data: metrics, isLoading, error } = useDashboardMetrics();
   const { data: recentSignals, isLoading: signalsLoading } = useRecentSignalsWithPerson();
+  const { data: riskTrend, isLoading: riskTrendLoading } = useRiskTrend();
   const navigate = useNavigate();
   const [selectedPersonId, setSelectedPersonId] = useState<string>('');
   const [selectedPersonName, setSelectedPersonName] = useState<string>('');
@@ -309,6 +312,67 @@ const ControlTower = () => {
                 </CardContent>
               </Card>
             </div>
+
+            {/* Risk Half-Life Chart */}
+            <Card className="bg-gradient-card border-border shadow-card">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg font-semibold text-foreground flex items-center">
+                  <Activity className="mr-2 h-4 w-4 text-primary" />
+                  Risk Half-Life (coaching impact)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {riskTrendLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <div className="animate-pulse flex flex-col items-center space-y-2">
+                      <div className="w-6 h-6 bg-muted rounded-full"></div>
+                      <p className="text-muted-foreground">Loading trend data...</p>
+                    </div>
+                  </div>
+                ) : !riskTrend || riskTrend.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Activity className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p>No risk trend data available</p>
+                    <p className="text-sm">Data will appear as risk scores are tracked over time</p>
+                  </div>
+                ) : (
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={riskTrend} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
+                        <XAxis 
+                          dataKey="day" 
+                          tickFormatter={(value) => new Date(value).toLocaleDateString()}
+                          className="text-xs"
+                        />
+                        <YAxis 
+                          domain={['dataMin - 0.5', 'dataMax + 0.5']}
+                          className="text-xs"
+                        />
+                        <Tooltip 
+                          labelFormatter={(value) => `Date: ${new Date(value).toLocaleDateString()}`}
+                          formatter={(value) => [`${value}`, 'Avg Risk Score']}
+                          contentStyle={{ 
+                            backgroundColor: 'hsl(var(--background))', 
+                            border: '1px solid hsl(var(--border))',
+                            borderRadius: '6px'
+                          }}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="avg_risk" 
+                          stroke="hsl(var(--primary))" 
+                          strokeWidth={2}
+                          dot={{ fill: 'hsl(var(--primary))', strokeWidth: 2, r: 4 }}
+                          activeDot={{ r: 6, stroke: 'hsl(var(--primary))', strokeWidth: 2 }}
+                          name="Avg Risk Score"
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
             {/* Recent Signals */}
             <Card className="bg-gradient-card border-border shadow-card">
