@@ -16,7 +16,9 @@ import {
   XCircle,
   UserCheck,
   Play,
-  RefreshCw
+  RefreshCw,
+  ArrowUp,
+  ArrowDown
 } from "lucide-react";
 import heroImage from "@/assets/hr-hero.jpg";
 import { useDashboardMetrics } from "@/hooks/useDashboardMetrics";
@@ -120,36 +122,37 @@ const ControlTower = () => {
   const riskMetrics = [
     {
       title: "Critical Signals",
-      value: isLoading ? "..." : (metrics?.criticalSignals.toString() || "0"),
-      change: "+2",
-      trend: "up",
+      value: isLoading ? "..." : metrics?.criticalSignals.toString() || "0",
+      change: isLoading ? "..." : metrics?.criticalSignalsChange || 0,
+      baseline: "from last week",
       icon: AlertTriangle,
       color: "text-destructive",
       bgColor: "bg-destructive/10"
     },
     {
-      title: "Risk Signals",
-      value: isLoading ? "..." : (metrics?.riskSignals.toString() || "0"),
-      change: "+1", 
-      trend: "up",
+      title: "Risk Signals", 
+      value: isLoading ? "..." : metrics?.riskSignals.toString() || "0",
+      change: isLoading ? "..." : metrics?.riskSignalsChange || 0,
+      baseline: "from last week",
       icon: Activity,
       color: "text-warning",
       bgColor: "bg-warning/10"
     },
     {
       title: "Active Coaching",
-      value: isLoading ? "..." : (metrics?.activeCoachingPlans.toString() || "0"),
-      change: "+3",
-      trend: "up",
+      value: isLoading ? "..." : metrics?.activeCoachingPlans.toString() || "0",
+      change: isLoading ? "..." : metrics?.activeCoachingPlansChange || 0,
+      baseline: "from last week",
       icon: Bot,
       color: "text-primary",
       bgColor: "bg-primary/10"
     },
     {
       title: "Avg Risk Score",
-      value: isLoading ? "..." : (metrics?.avgRiskScore.toString() || "0.0"),
-      change: "-0.2",
-      trend: "down", 
+      value: isLoading ? "..." : metrics?.avgRiskScore.toString() || "0.0",
+      change: isLoading ? "..." : metrics?.avgRiskScoreChange || 0,
+      baseline: "from last week",
+      median: isLoading ? "..." : metrics?.cohortMedianRiskScore || 0,
       icon: CheckCircle,
       color: "text-success",
       bgColor: "bg-success/10"
@@ -244,23 +247,54 @@ const ControlTower = () => {
                   <CardContent className="pt-0">
                     <div className="text-3xl font-bold text-foreground mb-2 group-hover:scale-105 transition-transform duration-300">
                       {metric.value}
+                      {typeof metric.change === 'number' && (
+                        <span className="text-sm font-normal ml-2 text-muted-foreground">
+                          ({metric.change > 0 ? '+' : ''}{metric.change} {metric.baseline})
+                        </span>
+                      )}
                     </div>
+                    
+                    {metric.median && (
+                      <div className="text-xs text-muted-foreground mb-2">
+                        Cohort median: {metric.median}
+                      </div>
+                    )}
+                    
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
-                        {metric.trend === "up" ? (
-                          <TrendingUp className="h-4 w-4 text-success mr-2 animate-bounce" />
-                        ) : (
-                          <TrendingUp className="h-4 w-4 text-success mr-2 rotate-180 animate-bounce" />
+                        {typeof metric.change === 'number' && metric.change !== 0 && (
+                          <>
+                            {metric.change > 0 ? (
+                              <ArrowUp className={`h-4 w-4 mr-2 ${
+                                metric.title.includes('Risk') || metric.title.includes('Critical') 
+                                  ? 'text-destructive' 
+                                  : 'text-success'
+                              }`} />
+                            ) : (
+                              <ArrowDown className={`h-4 w-4 mr-2 ${
+                                metric.title.includes('Risk') || metric.title.includes('Critical')
+                                  ? 'text-success'
+                                  : 'text-destructive'
+                              }`} />
+                            )}
+                            <span className={`text-sm font-medium ${
+                              metric.change > 0 && (metric.title.includes('Risk') || metric.title.includes('Critical'))
+                                ? 'text-destructive'
+                                : metric.change < 0 && (metric.title.includes('Risk') || metric.title.includes('Critical'))
+                                ? 'text-success'
+                                : metric.change > 0
+                                ? 'text-success'
+                                : 'text-destructive'
+                            }`}>
+                              {Math.abs(metric.change)} {metric.change > 0 ? 'increase' : 'decrease'}
+                            </span>
+                          </>
                         )}
-                        <span 
-                          className={`text-sm font-medium ${
-                            metric.trend === "up" ? "text-success" : "text-success"
-                          }`}
-                        >
-                          {metric.change}
-                        </span>
+                        {typeof metric.change === 'number' && metric.change === 0 && (
+                          <span className="text-sm text-muted-foreground">No change</span>
+                        )}
                       </div>
-                      <span className="text-xs text-muted-foreground bg-accent px-2 py-1 rounded-full">today</span>
+                      <span className="text-xs text-muted-foreground bg-accent px-2 py-1 rounded-full">this week</span>
                     </div>
                   </CardContent>
                   
