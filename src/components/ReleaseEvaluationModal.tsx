@@ -208,33 +208,31 @@ export const ReleaseEvaluationModal = ({ open, onOpenChange, personId, personNam
           policy_excerpt: "Decisions require objective evidence and at least 1 completed coaching loop unless severe breach."
         };
 
-        // Mock AI response for now - in real implementation, you'd call your AI endpoint
-        // This simulates an AI call that might fail
-        const simulateAIFailure = Math.random() < 0.3; // 30% chance of failure for demo
+        console.log('Calling AI release-bot function...');
         
-        if (simulateAIFailure) {
-          throw new Error("AI service unavailable");
+        // Call the actual AI edge function
+        const { data: aiResponse, error: functionError } = await supabase.functions.invoke('release-bot', {
+          body: payload
+        });
+
+        if (functionError) {
+          throw new Error(`Function error: ${functionError.message}`);
         }
 
-        const mockAiResult: AIResult = {
-          decision: evidenceData.length > 0 ? "extend_coaching" : "retain",
-          rationale: [
-            "AI analysis indicates performance metrics show improvement potential",
-            "Coaching engagement patterns suggest positive response to intervention",
-            "Risk factors are manageable with structured support plan"
-          ],
-          communication: `Hi ${profile.name},\n\nFollowing our AI-powered performance review, we've decided to continue with the current coaching plan. Our analysis shows positive momentum indicators, and we believe continued support will help you reach your full potential.\n\nBest regards,\nHR Team`,
-          checklist: [
-            "Manager notified of AI-recommended decision",
-            "Coaching plan updated with AI insights",
-            "Follow-up scheduled in 30 days",
-            "Performance metrics tracking enabled"
-          ]
-        };
+        if (aiResponse.error) {
+          throw new Error(`AI error: ${aiResponse.error}`);
+        }
 
-        setAiResult(mockAiResult);
+        // Validate AI response structure
+        if (!aiResponse.decision || !Array.isArray(aiResponse.rationale) || !aiResponse.communication || !Array.isArray(aiResponse.checklist)) {
+          throw new Error('Invalid AI response structure');
+        }
+
+        setAiResult(aiResponse);
         setUsingFallback(false);
-        setCheckedItems(new Array(mockAiResult.checklist.length).fill(false));
+        setCheckedItems(new Array(aiResponse.checklist.length).fill(false));
+        
+        console.log('AI evaluation completed successfully');
       } catch (aiError) {
         console.error('AI call failed, using rule-based fallback:', aiError);
         // Use rule-based fallback if AI fails
@@ -244,6 +242,11 @@ export const ReleaseEvaluationModal = ({ open, onOpenChange, personId, personNam
       }
     } catch (error) {
       console.error('Error in evaluation logic:', error);
+      // Final fallback to prevent crashes
+      const emergencyFallback = computeRuleBasedDecision(evidenceData);
+      setAiResult(emergencyFallback);
+      setUsingFallback(true);
+      setCheckedItems(new Array(emergencyFallback.checklist.length).fill(false));
     }
   };
 
