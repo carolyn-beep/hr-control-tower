@@ -11,6 +11,8 @@ interface DashboardMetrics {
   avgRiskScore: number;
   avgRiskScoreChange: number;
   cohortMedianRiskScore: number;
+  recoveredSignals: number;
+  recoveredSignalsChange: number;
 }
 
 export const useDashboardMetrics = () => {
@@ -63,6 +65,21 @@ export const useDashboardMetrics = () => {
           .lt('created_at', sevenDaysAgo)
       ]);
 
+      // Get recovered signals count (last 7 days vs previous 7 days)
+      const [{ count: recoveredCount }, { count: recoveredCountPrev }] = await Promise.all([
+        supabase
+          .from('signal')
+          .select('*', { count: 'exact', head: true })
+          .eq('level', 'info')
+          .gte('ts', sevenDaysAgo),
+        supabase
+          .from('signal')
+          .select('*', { count: 'exact', head: true })
+          .eq('level', 'info')
+          .gte('ts', fourteenDaysAgo)
+          .lt('ts', sevenDaysAgo)
+      ]);
+
       // Get current and previous week's average risk scores
       const [{ data: currentRiskScores }, { data: prevRiskScores }, { data: allRiskScores }] = await Promise.all([
         supabase
@@ -102,7 +119,9 @@ export const useDashboardMetrics = () => {
         activeCoachingPlansChange: (coachingCount || 0) - (coachingCountPrev || 0),
         avgRiskScore: currentAvg,
         avgRiskScoreChange: Math.round((currentAvg - prevAvg) * 10) / 10,
-        cohortMedianRiskScore: cohortMedian
+        cohortMedianRiskScore: cohortMedian,
+        recoveredSignals: recoveredCount || 0,
+        recoveredSignalsChange: (recoveredCount || 0) - (recoveredCountPrev || 0)
       };
     },
     refetchInterval: 30000, // Refetch every 30 seconds

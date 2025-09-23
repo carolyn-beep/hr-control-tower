@@ -29,6 +29,7 @@ import { useDashboardMetrics } from "@/hooks/useDashboardMetrics";
 import { useRecentSignalsWithPerson } from "@/hooks/useRecentSignalsWithPerson";
 import { useRiskTrend } from "@/hooks/useRiskTrend";
 import { usePersonSignalsSummary } from "@/hooks/usePersonSignalsSummary";
+import { useIndividualRecentSignals } from "@/hooks/useIndividualRecentSignals";
 import { useRefreshDemoData } from "@/hooks/useRefreshDemoData";
 import { ReleaseEvaluationModal } from "@/components/ReleaseEvaluationModal";
 import { AutoCoachModal } from "@/components/AutoCoachModal";
@@ -112,6 +113,7 @@ const recentSignals = [
 const ControlTower = () => {
   const { data: metrics, isLoading, error } = useDashboardMetrics();
   const { data: signalsSummary, isLoading: signalsLoading } = usePersonSignalsSummary();
+  const { data: individualSignals, isLoading: individualSignalsLoading } = useIndividualRecentSignals();
   const { data: riskTrend, isLoading: riskTrendLoading } = useRiskTrend();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -153,11 +155,10 @@ const ControlTower = () => {
       bgColor: "bg-primary/10"
     },
     {
-      title: "Avg Risk Score",
-      value: isLoading ? "..." : metrics?.avgRiskScore.toString() || "0.0",
-      change: isLoading ? "..." : metrics?.avgRiskScoreChange || 0,
+      title: "Recovered (7d)",
+      value: isLoading ? "..." : metrics?.recoveredSignals.toString() || "0",
+      change: isLoading ? "..." : metrics?.recoveredSignalsChange || 0,
       baseline: "from last week",
-      median: isLoading ? "..." : metrics?.cohortMedianRiskScore || 0,
       icon: CheckCircle,
       color: "text-success",
       bgColor: "bg-success/10"
@@ -259,9 +260,10 @@ const ControlTower = () => {
                       )}
                     </div>
                     
-                    {metric.median && (
+                    {/* Show median for risk score card only */}
+                    {metric.title === "Avg Risk Score" && metrics?.cohortMedianRiskScore && (
                       <div className="text-xs text-muted-foreground mb-2">
-                        Cohort median: {metric.median}
+                        Cohort median: {metrics.cohortMedianRiskScore}
                       </div>
                     )}
                     
@@ -575,116 +577,120 @@ const ControlTower = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {signalsLoading ? (
+                  {individualSignalsLoading ? (
                     <div className="text-center py-8 text-muted-foreground">
                       <div className="animate-pulse flex flex-col items-center space-y-2">
                         <div className="w-6 h-6 bg-muted rounded-full"></div>
                         <p>Loading signals...</p>
                       </div>
                     </div>
-                  ) : !signalsSummary || signalsSummary.length === 0 ? (
+                  ) : !individualSignals || individualSignals.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">
                       <AlertTriangle className="h-8 w-8 mx-auto mb-2 opacity-50" />
                       <p>No recent signals</p>
                       <p className="text-sm">All systems are running smoothly</p>
                     </div>
                   ) : (
-                    signalsSummary.map((person) => {
-                      const getTotalSignals = () => person.critical_count + person.risk_count + person.warn_count + person.info_count;
-                      const getHighestSeverity = () => {
-                        if (person.critical_count > 0) return 'critical';
-                        if (person.risk_count > 0) return 'risk';
-                        if (person.warn_count > 0) return 'warn';
-                        return 'info';
-                      };
-
+                    individualSignals.map((signal) => {
                       const getBadgeColor = (level: string) => {
                         switch (level.toLowerCase()) {
                           case 'critical': return 'bg-destructive text-destructive-foreground border-destructive';
                           case 'risk': return 'bg-warning text-warning-foreground border-warning';
-                          case 'warn': return 'bg-primary text-primary-foreground border-primary';
-                          case 'info': return 'bg-muted text-muted-foreground border-muted-foreground';
+                          case 'warn': 
+                          case 'warning': return 'bg-primary text-primary-foreground border-primary';
+                          case 'info': return 'bg-success text-success-foreground border-success';
                           default: return 'bg-muted text-muted-foreground border-muted-foreground';
                         }
                       };
 
-                      const getRiskScoreBadgeColor = (score: number) => {
-                        if (score >= 7) return 'bg-destructive text-destructive-foreground';
-                        if (score >= 4) return 'bg-warning text-warning-foreground';
-                        return 'bg-success text-success-foreground';
+                      const getBadgeText = (level: string) => {
+                        switch (level.toLowerCase()) {
+                          case 'critical': return 'CRITICAL';
+                          case 'risk': return 'RISK';
+                          case 'warn':
+                          case 'warning': return 'WARN';
+                          case 'info': return 'RECOVERED';
+                          default: return level.toUpperCase();
+                        }
                       };
 
-                      const getSignalSummary = () => {
-                        const parts: string[] = [];
-                        if (person.critical_count > 0) parts.push(`${person.critical_count} Critical`);
-                        if (person.risk_count > 0) parts.push(`${person.risk_count} Risk`);
-                        if (person.warn_count > 0) parts.push(`${person.warn_count} Warn`);
-                        if (person.info_count > 0) parts.push(`${person.info_count} Info`);
+                      const formatTimeAgo = (timestamp: string) => {
+                        const now = new Date();
+                        const past = new Date(timestamp);
+                        const diffMs = now.getTime() - past.getTime();
+                        const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
                         
-                        return parts.join(', ') + ` signal${getTotalSignals() > 1 ? 's' : ''}`;
-                      };
-
-                      const getCohortComparison = () => {
-                        const diff = Math.abs(person.risk_score - person.cohort_median);
-                        const comparison = person.risk_score > person.cohort_median ? 'above' : 'below';
-                        return `${diff.toFixed(1)}pt ${comparison} cohort median`;
+                        if (diffHours < 1) return 'Just now';
+                        if (diffHours === 1) return '1h ago';
+                        if (diffHours < 24) return `${diffHours}h ago`;
+                        
+                        const diffDays = Math.floor(diffHours / 24);
+                        if (diffDays === 1) return '1d ago';
+                        return `${diffDays}d ago`;
                       };
 
                       return (
                         <div 
-                          key={person.id} 
+                          key={signal.id} 
                           className="flex items-center justify-between p-4 rounded-lg border bg-accent/30 hover:bg-accent/50 transition-colors"
                         >
                           <div className="flex items-center space-x-4 flex-1">
                             <Badge 
                               variant="outline" 
-                              className={`font-bold text-xs min-w-[80px] justify-center ${getBadgeColor(getHighestSeverity())}`}
+                              className={`font-bold text-xs min-w-[90px] justify-center ${getBadgeColor(signal.level)}`}
                             >
-                              {getHighestSeverity().toUpperCase()}
+                              {getBadgeText(signal.level)}
                             </Badge>
                             <div className="flex-1">
-                              <div className="font-semibold text-foreground">{person.name}</div>
-                              <div className="text-sm text-muted-foreground">{getSignalSummary()}</div>
-                              <div className="text-xs text-muted-foreground mt-1">{getCohortComparison()}</div>
+                              <div className="font-semibold text-foreground">{signal.person}</div>
+                              <div className="text-sm text-muted-foreground">{signal.reason}</div>
+                              <div className="text-xs text-muted-foreground mt-1">{formatTimeAgo(signal.ts)}</div>
                             </div>
                           </div>
                           
                           <div className="flex items-center space-x-3">
-                            <Badge 
-                              variant="outline" 
-                              className={`text-xs min-w-[60px] justify-center ${getRiskScoreBadgeColor(person.risk_score)}`}
-                            >
-                              {person.risk_score.toFixed(1)}
-                            </Badge>
-                            <Button 
-                              variant={person.critical_count > 0 || person.risk_count > 0 ? "gradient" : "outline"}
-                              size="sm"
-                              className="shadow-soft hover:shadow-dashboard transition-all duration-200 hover:scale-105"
-                              onClick={() => {
-                                setSelectedPersonId(person.id);
-                                setSelectedPersonName(person.name);
-                                setSelectedSignalId(''); // No specific signal ID for aggregated view
-                                setSelectedReason(getSignalSummary());
-                                
-                                if (person.critical_count > 0 || person.risk_count > 0) {
-                                  setModalOpen(true);
-                                } else {
-                                  setAutoCoachModalOpen(true);
-                                }
-                              }}
-                            >
-                              {person.critical_count > 0 || person.risk_count > 0 ? (
-                                <>
-                                  <UserCheck className="h-4 w-4 mr-2" />
-                                  Evaluate for Release
-                                </>
-                              ) : (
-                                <>
-                                  <Play className="h-4 w-4 mr-2" />
-                                  Start Auto-Coach
-                                </>
-                              )}
-                            </Button>
+                            {signal.score_delta && signal.score_delta < 0 && (
+                              <div className="text-right">
+                                <div className="text-sm font-semibold text-success">
+                                  {signal.score_delta}
+                                </div>
+                                <div className="text-xs text-success flex items-center">
+                                  <ArrowDown className="h-3 w-3 mr-1" />
+                                  Risk ↓
+                                </div>
+                              </div>
+                            )}
+                            {signal.level !== 'info' && (
+                              <Button 
+                                variant={signal.level === 'critical' || signal.level === 'risk' ? "gradient" : "outline"}
+                                size="sm"
+                                className="shadow-soft hover:shadow-dashboard transition-all duration-200 hover:scale-105"
+                                onClick={() => {
+                                  setSelectedPersonId(signal.person_id);
+                                  setSelectedPersonName(signal.person);
+                                  setSelectedSignalId(signal.id);
+                                  setSelectedReason(signal.reason);
+                                  
+                                  if (signal.level === 'critical' || signal.level === 'risk') {
+                                    setModalOpen(true);
+                                  } else {
+                                    setAutoCoachModalOpen(true);
+                                  }
+                                }}
+                              >
+                                {signal.level === 'critical' || signal.level === 'risk' ? (
+                                  <>
+                                    <UserCheck className="h-4 w-4 mr-2" />
+                                    Evaluate
+                                  </>
+                                ) : (
+                                  <>
+                                    <Play className="h-4 w-4 mr-2" />
+                                    Coach
+                                  </>
+                                )}
+                              </Button>
+                            )}
                           </div>
                         </div>
                       );
