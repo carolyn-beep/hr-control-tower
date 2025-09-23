@@ -47,6 +47,13 @@ export type Database = {
             referencedRelation: "person"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "coaching_plan_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "v_person_overview"
+            referencedColumns: ["id"]
+          },
         ]
       }
       kpi: {
@@ -113,6 +120,13 @@ export type Database = {
             referencedRelation: "person"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "performance_event_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "v_person_overview"
+            referencedColumns: ["id"]
+          },
         ]
       }
       person: {
@@ -124,6 +138,7 @@ export type Database = {
           name: string
           role: string | null
           start_date: string | null
+          status: string | null
           updated_at: string
         }
         Insert: {
@@ -134,6 +149,7 @@ export type Database = {
           name: string
           role?: string | null
           start_date?: string | null
+          status?: string | null
           updated_at?: string
         }
         Update: {
@@ -144,6 +160,7 @@ export type Database = {
           name?: string
           role?: string | null
           start_date?: string | null
+          status?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -187,6 +204,13 @@ export type Database = {
             referencedRelation: "person"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "release_case_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "v_person_overview"
+            referencedColumns: ["id"]
+          },
         ]
       }
       risk_score: {
@@ -214,6 +238,13 @@ export type Database = {
             columns: ["person_id"]
             isOneToOne: true
             referencedRelation: "person"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "risk_score_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: true
+            referencedRelation: "v_person_overview"
             referencedColumns: ["id"]
           },
         ]
@@ -254,6 +285,13 @@ export type Database = {
             referencedRelation: "person"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "signal_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "v_person_overview"
+            referencedColumns: ["id"]
+          },
         ]
       }
       user_profiles: {
@@ -288,6 +326,18 @@ export type Database = {
       }
     }
     Views: {
+      v_person_overview: {
+        Row: {
+          email: string | null
+          id: string | null
+          last_signal_ts: string | null
+          name: string | null
+          risk_score: number | null
+          role: string | null
+          status: string | null
+        }
+        Relationships: []
+      }
       v_release_open: {
         Row: {
           email: string | null
