@@ -5,6 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EvidenceModal } from "@/components/EvidenceModal";
 import { useReleaseOpen } from "@/hooks/useReleaseOpen";
 import { supabase } from "@/integrations/supabase/client";
@@ -109,18 +114,121 @@ const workflows = [
   }
 ];
 
+interface CreateWorkflowFormProps {
+  onSubmit: (data: any) => void;
+}
+
+const CreateWorkflowForm = ({ onSubmit }: CreateWorkflowFormProps) => {
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+    trigger: "",
+    priority: "medium"
+  });
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name || !formData.description || !formData.trigger) {
+      return;
+    }
+    onSubmit(formData);
+    setFormData({ name: "", description: "", trigger: "", priority: "medium" });
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <Label htmlFor="name">Workflow Name</Label>
+        <Input
+          id="name"
+          value={formData.name}
+          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          placeholder="e.g., Performance Recovery Protocol"
+          required
+        />
+      </div>
+      
+      <div>
+        <Label htmlFor="description">Description</Label>
+        <Textarea
+          id="description"
+          value={formData.description}
+          onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+          placeholder="Describe what this workflow automates..."
+          required
+        />
+      </div>
+      
+      <div>
+        <Label htmlFor="trigger">Trigger Condition</Label>
+        <Select value={formData.trigger} onValueChange={(value) => setFormData({ ...formData, trigger: value })}>
+          <SelectTrigger>
+            <SelectValue placeholder="Select when this workflow should activate" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="performance_decline">Performance Decline Detected</SelectItem>
+            <SelectItem value="engagement_drop">Engagement Score Drop</SelectItem>
+            <SelectItem value="burnout_signals">Burnout Risk Indicators</SelectItem>
+            <SelectItem value="collaboration_issues">Collaboration Problems</SelectItem>
+            <SelectItem value="attendance_pattern">Unusual Attendance Pattern</SelectItem>
+            <SelectItem value="custom">Custom Signal Pattern</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      
+      <div>
+        <Label htmlFor="priority">Priority Level</Label>
+        <Select value={formData.priority} onValueChange={(value) => setFormData({ ...formData, priority: value })}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="low">Low</SelectItem>
+            <SelectItem value="medium">Medium</SelectItem>
+            <SelectItem value="high">High</SelectItem>
+            <SelectItem value="critical">Critical</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      
+      <div className="flex gap-3 pt-4">
+        <Button type="submit" className="bg-gradient-primary flex-1">
+          <Play className="h-4 w-4 mr-2" />
+          Create Workflow
+        </Button>
+        <Button type="button" variant="outline" className="flex-1">
+          Save as Draft
+        </Button>
+      </div>
+    </form>
+  );
+};
+
 const Workflows = () => {
   const { data: releaseCases, isLoading, refetch } = useReleaseOpen();
   const { toast } = useToast();
   const [selectedEvidence, setSelectedEvidence] = useState<any>(null);
   const [selectedPersonName, setSelectedPersonName] = useState<string>("");
   const [evidenceModalOpen, setEvidenceModalOpen] = useState(false);
+  const [createWorkflowModalOpen, setCreateWorkflowModalOpen] = useState(false);
 
   const handleViewWorkflowDetails = (workflow: any) => {
     toast({
       title: `${workflow.name} - Detailed Analytics`,
       description: `Success Rate: ${workflow.success_rate}% | Triggers: ${workflow.triggers} | Resolution: ${workflow.metrics.avg_resolution_time} | Current Status: ${workflow.status}`,
     });
+  };
+
+  const handleCreateWorkflow = () => {
+    setCreateWorkflowModalOpen(true);
+  };
+
+  const handleSubmitWorkflow = (workflowData: any) => {
+    toast({
+      title: "Workflow Created!",
+      description: `"${workflowData.name}" has been created successfully. It will be activated shortly.`,
+    });
+    setCreateWorkflowModalOpen(false);
   };
 
   const handleViewEvidence = async (releaseId: string, personName: string) => {
@@ -445,7 +553,7 @@ const Workflows = () => {
                 <GitBranch className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-foreground mb-2">Create New Workflow</h3>
                 <p className="text-muted-foreground mb-4">Design custom automation workflows for your team's needs</p>
-                <Button className="bg-gradient-primary">
+                <Button className="bg-gradient-primary" onClick={handleCreateWorkflow}>
                   <Play className="h-4 w-4 mr-2" />
                   Create Workflow
                 </Button>
@@ -461,6 +569,19 @@ const Workflows = () => {
         evidence={selectedEvidence}
         personName={selectedPersonName}
       />
+
+      {/* Create Workflow Modal */}
+      <Dialog open={createWorkflowModalOpen} onOpenChange={setCreateWorkflowModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Create New Workflow</DialogTitle>
+          </DialogHeader>
+          
+          <div className="space-y-6 py-4">
+            <CreateWorkflowForm onSubmit={handleSubmitWorkflow} />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
