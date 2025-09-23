@@ -49,6 +49,78 @@ export type Database = {
           },
         ]
       }
+      kpi: {
+        Row: {
+          created_at: string
+          description: string | null
+          higher_is_better: boolean | null
+          id: string
+          name: string
+          unit: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          higher_is_better?: boolean | null
+          id?: string
+          name: string
+          unit?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          higher_is_better?: boolean | null
+          id?: string
+          name?: string
+          unit?: string | null
+        }
+        Relationships: []
+      }
+      performance_event: {
+        Row: {
+          created_at: string
+          id: string
+          kpi_id: string
+          person_id: string
+          source: string | null
+          ts: string
+          value: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          kpi_id: string
+          person_id: string
+          source?: string | null
+          ts?: string
+          value: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          kpi_id?: string
+          person_id?: string
+          source?: string | null
+          ts?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "performance_event_kpi_id_fkey"
+            columns: ["kpi_id"]
+            isOneToOne: false
+            referencedRelation: "kpi"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "performance_event_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "person"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       person: {
         Row: {
           created_at: string
@@ -197,7 +269,16 @@ export type Database = {
       }
     }
     Functions: {
-      [_ in never]: never
+      get_performance_evidence: {
+        Args: { target_person_id: string }
+        Returns: {
+          benchmark: number
+          kpi: string
+          source_link: string
+          time_window: string
+          value: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
