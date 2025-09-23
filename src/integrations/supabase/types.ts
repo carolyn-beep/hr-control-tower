@@ -438,6 +438,10 @@ export type Database = {
             }
         Returns: string
       }
+      refresh_demo_data: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       release_safeguards: {
         Args: { target_person_id: string }
         Returns: {
