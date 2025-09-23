@@ -8,8 +8,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Filter, Loader2, UserCheck, AlertTriangle, Activity, MoreHorizontal, Bot, FileText, Eye, Clock as ClockIcon, CheckCircle2 } from "lucide-react";
-import { useSignalsData } from "@/hooks/useSignalsData";
+import { CalendarIcon, Filter, Loader2, UserCheck, AlertTriangle, Activity, MoreHorizontal, Bot, FileText, Eye, Clock as ClockIcon, CheckCircle2, CheckCircle } from "lucide-react";
+import { useRankedSignals } from "@/hooks/useRankedSignals";
+import { useRecognizeAndCloseLoop } from "@/hooks/useRecognizeAndCloseLoop";
 import { ReleaseEvaluationModal } from "@/components/ReleaseEvaluationModal";
 import { AutoCoachModal } from "@/components/AutoCoachModal";
 import { EvidenceModal } from "@/components/EvidenceModal";
@@ -57,12 +58,14 @@ const SignalsTable = () => {
     return levelFilter;
   };
 
-  const { data: signals, isLoading, error } = useSignalsData({
+  const { data: signals, isLoading, error } = useRankedSignals({
     levelFilter: getApiLevelFilter(),
     startDate: startDate?.toISOString(),
     endDate: endDate?.toISOString(),
     multipleLevels: levelFilter === 'risk_critical' ? ['risk', 'critical'] : undefined
   });
+
+  const recognizeAndCloseLoop = useRecognizeAndCloseLoop();
 
   const getBadgeVariant = (level: string) => {
     switch (level.toLowerCase()) {
@@ -250,28 +253,70 @@ const SignalsTable = () => {
                       </div>
                     </TableCell>
                     <TableCell className="text-right font-mono">
-                      {signal.score_delta !== null ? (
-                        <span className={signal.score_delta > 0 ? "text-destructive" : "text-success"}>
-                          {signal.score_delta > 0 ? "+" : ""}{signal.score_delta}
+                      {signal.score_delta !== null && signal.score_delta !== 0 ? (
+                        <span className={`text-sm font-semibold ${
+                          signal.score_delta < 0 
+                            ? 'text-success' 
+                            : signal.level === 'critical' 
+                              ? 'text-destructive'
+                              : signal.level === 'risk'
+                                ? 'text-warning'
+                                : 'text-warning'
+                        }`}>
+                          {signal.score_delta < 0 
+                            ? `${Math.round(signal.score_delta * 10) / 10} Risk ↓`
+                            : `+${Math.round(signal.score_delta * 10) / 10} Risk ↑`
+                          }
                         </span>
                       ) : (
                         <span className="text-muted-foreground">—</span>
                       )}
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button 
-                        variant="gradient" 
-                        size="sm"
-                        className="shadow-soft hover:shadow-dashboard"
-                        onClick={() => {
-                          setSelectedPersonId(signal.person_id);
-                          setSelectedPersonName(signal.person);
-                          setModalOpen(true);
-                        }}
-                      >
-                        <UserCheck className="h-4 w-4 mr-2" />
-                        Evaluate for Release
-                      </Button>
+                      {signal.action_type === 'release' && (
+                        <Button 
+                          variant="outline"
+                          size="sm"
+                          className="shadow-soft hover:shadow-dashboard transition-all duration-200 hover:scale-105 bg-purple-500/10 border-purple-500/20 text-purple-600 hover:bg-purple-500/20"
+                          onClick={() => {
+                            setSelectedPersonId(signal.person_id);
+                            setSelectedPersonName(signal.person);
+                            setSelectedSignalReason(signal.reason);
+                            setModalOpen(true);
+                          }}
+                        >
+                          <UserCheck className="h-4 w-4 mr-2" />
+                          Evaluate for Release
+                        </Button>
+                      )}
+                      {signal.action_type === 'coach' && (
+                        <Button 
+                          variant="outline"
+                          size="sm"
+                          className="shadow-soft hover:shadow-dashboard transition-all duration-200 hover:scale-105 bg-blue-500/10 border-blue-500/20 text-blue-600 hover:bg-blue-500/20"
+                          onClick={() => {
+                            setSelectedPersonId(signal.person_id);
+                            setSelectedPersonName(signal.person);
+                            setSelectedSignalReason(signal.reason);
+                            setAutoCoachOpen(true);
+                          }}
+                        >
+                          <Bot className="h-4 w-4 mr-2" />
+                          Start Auto-Coach
+                        </Button>
+                      )}
+                      {signal.action_type === 'kudos' && (
+                        <Button 
+                          variant="outline"
+                          size="sm"
+                          className="shadow-soft hover:shadow-dashboard transition-all duration-200 hover:scale-105 bg-green-500/10 border-green-500/20 text-green-600 hover:bg-green-500/20"
+                          onClick={() => recognizeAndCloseLoop.mutate({ personId: signal.person_id })}
+                          disabled={recognizeAndCloseLoop.isPending}
+                        >
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                          {recognizeAndCloseLoop.isPending ? 'Processing...' : 'Recognize & Close Loop'}
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -312,6 +357,15 @@ const SignalsTable = () => {
         onOpenChange={setModalOpen}
         personId={selectedPersonId}
         personName={selectedPersonName}
+        reason={selectedSignalReason}
+      />
+      
+      <AutoCoachModal
+        open={autoCoachOpen}
+        onOpenChange={setAutoCoachOpen}
+        personId={selectedPersonId}
+        personName={selectedPersonName}
+        reason={selectedSignalReason}
       />
     </div>
   );
