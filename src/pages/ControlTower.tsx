@@ -178,33 +178,37 @@ const ControlTower = () => {
             {/* Risk Metrics */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
               {riskMetrics.map((metric, index) => (
-                <Card key={index} className="bg-gradient-card border-border shadow-card hover:shadow-dashboard transition-all duration-300">
+                <Card key={index} className="relative bg-gradient-card border-border shadow-card hover:shadow-dashboard transition-all duration-300 group">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium text-muted-foreground">
                       {metric.title}
                     </CardTitle>
-                    <div className={`p-2 rounded-md ${metric.bgColor}`}>
-                      <metric.icon className={`h-4 w-4 ${metric.color}`} />
+                    <div className={`p-2.5 rounded-lg ${metric.bgColor} group-hover:scale-110 transition-transform duration-200`}>
+                      <metric.icon className={`h-5 w-5 ${metric.color}`} />
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold text-foreground">{metric.value}</div>
-                    <div className="flex items-center mt-2">
-                      {metric.trend === "up" ? (
-                        <TrendingUp className="h-4 w-4 text-success mr-1" />
-                      ) : (
-                        <TrendingUp className="h-4 w-4 text-success mr-1 rotate-180" />
-                      )}
-                      <span 
-                        className={`text-sm ${
-                          metric.trend === "up" ? "text-success" : "text-success"
-                        }`}
-                      >
-                        {metric.change}
-                      </span>
-                      <span className="text-sm text-muted-foreground ml-1">today</span>
+                    <div className="text-3xl font-bold text-foreground mb-2">{metric.value}</div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center">
+                        {metric.trend === "up" ? (
+                          <TrendingUp className="h-4 w-4 text-success mr-1" />
+                        ) : (
+                          <TrendingUp className="h-4 w-4 text-success mr-1 rotate-180" />
+                        )}
+                        <span 
+                          className={`text-sm font-medium ${
+                            metric.trend === "up" ? "text-success" : "text-success"
+                          }`}
+                        >
+                          {metric.change}
+                        </span>
+                      </div>
+                      <span className="text-xs text-muted-foreground">today</span>
                     </div>
                   </CardContent>
+                  {/* Subtle hover gradient */}
+                  <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
                 </Card>
               ))}
             </div>
@@ -214,24 +218,27 @@ const ControlTower = () => {
               {/* Quick Actions */}
               <Card className="bg-gradient-card border-border shadow-card">
                 <CardHeader>
-                  <CardTitle className="text-lg font-semibold text-foreground">Quick Actions</CardTitle>
+                  <CardTitle className="text-lg font-semibold text-foreground flex items-center">
+                    <Activity className="mr-2 h-5 w-5 text-primary" />
+                    Quick Actions
+                  </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3">
-                  <Button className="w-full justify-start bg-gradient-primary text-primary-foreground hover:opacity-90">
-                    <AlertTriangle className="mr-2 h-4 w-4" />
-                    Review High Signals
+                  <Button className="w-full justify-start bg-gradient-primary text-primary-foreground hover:opacity-90 group">
+                    <AlertTriangle className="mr-3 h-4 w-4 group-hover:scale-110 transition-transform" />
+                    <span className="font-medium">Review High Signals</span>
                   </Button>
-                  <Button variant="outline" className="w-full justify-start">
-                    <Bot className="mr-2 h-4 w-4" />
-                    Launch Auto-Coach
+                  <Button variant="outline" className="w-full justify-start hover:bg-primary/5 group">
+                    <Bot className="mr-3 h-4 w-4 group-hover:scale-110 transition-transform" />
+                    <span className="font-medium">Launch Auto-Coach</span>
                   </Button>
-                  <Button variant="outline" className="w-full justify-start">
-                    <Activity className="mr-2 h-4 w-4" />
-                    Analyze Trends
+                  <Button variant="outline" className="w-full justify-start hover:bg-primary/5 group">
+                    <Activity className="mr-3 h-4 w-4 group-hover:scale-110 transition-transform" />
+                    <span className="font-medium">Analyze Trends</span>
                   </Button>
-                  <Button variant="outline" className="w-full justify-start">
-                    <TrendingUp className="mr-2 h-4 w-4" />
-                    Generate Report
+                  <Button variant="outline" className="w-full justify-start hover:bg-primary/5 group">
+                    <TrendingUp className="mr-3 h-4 w-4 group-hover:scale-110 transition-transform" />
+                    <span className="font-medium">Generate Report</span>
                   </Button>
                 </CardContent>
               </Card>
@@ -239,30 +246,50 @@ const ControlTower = () => {
               {/* AI Automation Status */}
               <Card className="lg:col-span-2 bg-gradient-card border-border shadow-card">
                 <CardHeader>
-                  <CardTitle className="text-lg font-semibold text-foreground">AI Automation Status</CardTitle>
+                  <CardTitle className="text-lg font-semibold text-foreground flex items-center">
+                    <Bot className="mr-2 h-5 w-5 text-primary" />
+                    AI Automation Status
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     {[
-                      { system: "Risk Detection Engine", status: "Active", processes: "247 signals processed", type: "success" },
-                      { system: "Auto-Coach Generator", status: "Active", processes: "56 coaching sessions", type: "success" },
-                      { system: "Performance Analyzer", status: "Training", processes: "Learning new patterns", type: "warning" },
-                      { system: "Workflow Automation", status: "Active", processes: "23 workflows triggered", type: "success" }
+                      { system: "Risk Detection Engine", status: "Active", processes: "247 signals processed", type: "success", icon: AlertTriangle },
+                      { system: "Auto-Coach Generator", status: "Active", processes: "56 coaching sessions", type: "success", icon: Bot },
+                      { system: "Performance Analyzer", status: "Training", processes: "Learning new patterns", type: "warning", icon: Activity },
+                      { system: "Workflow Automation", status: "Active", processes: "23 workflows triggered", type: "success", icon: CheckCircle }
                     ].map((automation, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-accent rounded-lg">
+                      <div key={index} className="flex items-center justify-between p-4 bg-accent/50 rounded-lg hover:bg-accent transition-colors group">
                         <div className="flex items-center space-x-4">
-                          <div className={`w-2 h-2 rounded-full ${
-                            automation.type === 'success' ? 'bg-success' : 
-                            automation.type === 'warning' ? 'bg-warning' : 'bg-primary'
-                          }`}></div>
+                          <div className={`p-2 rounded-lg ${
+                            automation.type === 'success' ? 'bg-success/10' : 
+                            automation.type === 'warning' ? 'bg-warning/10' : 'bg-primary/10'
+                          }`}>
+                            <automation.icon className={`h-4 w-4 ${
+                              automation.type === 'success' ? 'text-success' : 
+                              automation.type === 'warning' ? 'text-warning' : 'text-primary'
+                            }`} />
+                          </div>
                           <div>
-                            <p className="font-medium text-foreground">{automation.system}</p>
+                            <p className="font-semibold text-foreground">{automation.system}</p>
                             <p className="text-sm text-muted-foreground">{automation.processes}</p>
                           </div>
                         </div>
-                        <Badge variant={automation.status === 'Active' ? 'default' : 'secondary'}>
-                          {automation.status}
-                        </Badge>
+                        <div className="flex items-center space-x-2">
+                          <div className={`w-2 h-2 rounded-full ${
+                            automation.type === 'success' ? 'bg-success animate-pulse' : 
+                            automation.type === 'warning' ? 'bg-warning animate-pulse' : 'bg-primary animate-pulse'
+                          }`}></div>
+                          <Badge 
+                            variant={automation.status === 'Active' ? 'default' : 'secondary'}
+                            className={`${
+                              automation.type === 'success' ? 'bg-success/10 text-success border-success/20' :
+                              automation.type === 'warning' ? 'bg-warning/10 text-warning border-warning/20' : ''
+                            }`}
+                          >
+                            {automation.status}
+                          </Badge>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -281,9 +308,14 @@ const ControlTower = () => {
               <CardContent>
                 <div className="space-y-3">
                   {signalsLoading ? (
-                    <div className="text-center py-4 text-muted-foreground">Loading signals...</div>
+                    <div className="text-center py-8 text-muted-foreground">
+                      <div className="animate-pulse">Loading signals...</div>
+                    </div>
                   ) : !recentSignals || recentSignals.length === 0 ? (
-                    <div className="text-center py-4 text-muted-foreground">No recent signals</div>
+                    <div className="text-center py-8 text-muted-foreground">
+                      <AlertTriangle className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                      <p>No recent signals</p>
+                    </div>
                   ) : (
                     recentSignals.map((signal, index) => {
                       // Calculate time ago
@@ -304,58 +336,132 @@ const ControlTower = () => {
                         }
                       };
 
-                      const getSeverityColor = (level: string) => {
+                      const getSeverityConfig = (level: string) => {
                         switch(level) {
-                          case 'critical': return 'bg-destructive';
-                          case 'risk': return 'bg-warning';
-                          case 'warning': return 'bg-primary';
-                          default: return 'bg-muted-foreground';
+                          case 'critical': return {
+                            color: 'bg-destructive',
+                            textColor: 'text-destructive',
+                            badgeVariant: 'destructive' as const,
+                            priority: 'CRITICAL'
+                          };
+                          case 'risk': return {
+                            color: 'bg-warning',
+                            textColor: 'text-warning',
+                            badgeVariant: 'secondary' as const,
+                            priority: 'HIGH'
+                          };
+                          case 'warning': return {
+                            color: 'bg-primary',
+                            textColor: 'text-primary',
+                            badgeVariant: 'outline' as const,
+                            priority: 'MEDIUM'
+                          };
+                          default: return {
+                            color: 'bg-muted-foreground',
+                            textColor: 'text-muted-foreground',
+                            badgeVariant: 'outline' as const,
+                            priority: 'LOW'
+                          };
                         }
                       };
 
-                      const getStatusColor = (level: string) => {
+                      const getStatusConfig = (level: string) => {
                         switch(level) {
-                          case 'critical': return 'bg-destructive text-destructive-foreground';
-                          case 'risk': return 'bg-primary text-primary-foreground';
-                          default: return '';
+                          case 'critical': return {
+                            variant: 'destructive' as const,
+                            icon: <XCircle className="h-4 w-4" />,
+                            actionable: true
+                          };
+                          case 'risk': return {
+                            variant: 'default' as const,
+                            icon: <Clock className="h-4 w-4" />,
+                            actionable: true
+                          };
+                          default: return {
+                            variant: 'secondary' as const,
+                            icon: <Clock className="h-4 w-4" />,
+                            actionable: false
+                          };
                         }
                       };
 
-                      const getStatusIcon = (level: string) => {
-                        switch(level) {
-                          case 'critical': return <XCircle className="h-4 w-4 text-destructive" />;
-                          case 'risk': return <Clock className="h-4 w-4 text-warning" />;
-                          default: return <Clock className="h-4 w-4 text-primary" />;
-                        }
-                      };
+                      const severityConfig = getSeverityConfig(signal.level);
+                      const statusConfig = getStatusConfig(signal.level);
 
                       return (
-                        <div key={index} className="flex items-center justify-between p-4 bg-accent rounded-lg hover:bg-accent/80 transition-colors">
-                          <div className="flex items-center space-x-4">
-                            <div className={`w-3 h-3 rounded-full ${getSeverityColor(signal.level)}`}></div>
-                            <div>
-                              <div className="flex items-center space-x-2">
-                                <span className="font-medium text-foreground">{signal.name}</span>
-                                <span className="text-sm text-muted-foreground">•</span>
-                                <span className="text-sm text-foreground">{signal.reason}</span>
+                        <div 
+                          key={index} 
+                          className={`group relative p-4 rounded-lg border transition-all duration-200 hover:shadow-md ${
+                            signal.level === 'critical' 
+                              ? 'bg-destructive/5 border-destructive/20 hover:bg-destructive/10' 
+                              : signal.level === 'risk'
+                              ? 'bg-warning/5 border-warning/20 hover:bg-warning/10'
+                              : 'bg-accent hover:bg-accent/80 border-border'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-start space-x-4 flex-1">
+                              {/* Enhanced severity indicator */}
+                              <div className="flex flex-col items-center space-y-1 mt-1">
+                                <div className={`w-4 h-4 rounded-full ${severityConfig.color} shadow-sm`}></div>
+                                <div className={`text-xs font-medium ${severityConfig.textColor} rotate-90 whitespace-nowrap`}>
+                                  {severityConfig.priority}
+                                </div>
                               </div>
-                              <div className="flex items-center space-x-2 mt-1">
-                                <Badge variant="outline" className="text-xs capitalize">
-                                  {signal.level}
+                              
+                              <div className="flex-1 space-y-2">
+                                {/* Employee and reason */}
+                                <div>
+                                  <div className="flex items-center space-x-2 mb-1">
+                                    <span className="font-semibold text-foreground text-lg">{signal.name}</span>
+                                    <span className="text-muted-foreground">•</span>
+                                    <span className="text-foreground font-medium">{signal.reason}</span>
+                                  </div>
+                                  
+                                  {/* Enhanced badges and time */}
+                                  <div className="flex items-center space-x-3">
+                                    <Badge 
+                                      variant={severityConfig.badgeVariant}
+                                      className="text-xs font-semibold px-2 py-1"
+                                    >
+                                      {signal.level.toUpperCase()}
+                                    </Badge>
+                                    <span className="text-sm text-muted-foreground flex items-center">
+                                      <Clock className="h-3 w-3 mr-1" />
+                                      {timeString}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            
+                            {/* Enhanced status and actions */}
+                            <div className="flex items-center space-x-3 ml-4">
+                              <div className="text-right space-y-2">
+                                <Badge 
+                                  variant={statusConfig.variant}
+                                  className="flex items-center space-x-1 px-3 py-1"
+                                >
+                                  {statusConfig.icon}
+                                  <span className="ml-1">{getStatus(signal.level)}</span>
                                 </Badge>
-                                <span className="text-xs text-muted-foreground">{timeString}</span>
+                                
+                                {/* Action button for critical/risk signals */}
+                                {statusConfig.actionable && (
+                                  <Button 
+                                    size="sm" 
+                                    variant={signal.level === 'critical' ? 'destructive' : 'default'}
+                                    className="w-full"
+                                  >
+                                    {signal.level === 'critical' ? 'Review Alert' : 'View Details'}
+                                  </Button>
+                                )}
                               </div>
                             </div>
                           </div>
-                          <div className="flex items-center space-x-3">
-                            <Badge 
-                              variant="secondary"
-                              className={getStatusColor(signal.level)}
-                            >
-                              {getStatus(signal.level)}
-                            </Badge>
-                            {getStatusIcon(signal.level)}
-                          </div>
+                          
+                          {/* Subtle hover effect */}
+                          <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none" />
                         </div>
                       );
                     })
