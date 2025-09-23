@@ -55,7 +55,7 @@ export const useRankedSignals = ({ levelFilter, startDate, endDate, multipleLeve
         throw error;
       }
 
-      // Transform and rank signals in JavaScript
+      // Transform signals to match SQL structure
       const signals = (data || []).map(signal => ({
         id: signal.id,
         ts: signal.ts,
@@ -68,7 +68,7 @@ export const useRankedSignals = ({ levelFilter, startDate, endDate, multipleLeve
         action_type: getActionType(signal.level)
       }));
 
-      // Group by person_id and level, then get most recent
+      // Group by person_id and level, then get most recent (ROW_NUMBER() OVER logic)
       const ranked = new Map<string, RankedSignalData>();
       
       signals.forEach(signal => {
@@ -89,8 +89,18 @@ export const useRankedSignals = ({ levelFilter, startDate, endDate, multipleLeve
         result = result.filter(signal => signal.level === levelFilter);
       }
 
-      // Sort by timestamp descending
-      return result.sort((a, b) => new Date(b.ts).getTime() - new Date(a.ts).getTime());
+      // Sort by priority and timestamp (matching SQL ORDER BY)
+      return result.sort((a, b) => {
+        const levelPriority = { 'critical': 1, 'risk': 2, 'warn': 3, 'info': 4 };
+        const aPriority = levelPriority[a.level as keyof typeof levelPriority] || 5;
+        const bPriority = levelPriority[b.level as keyof typeof levelPriority] || 5;
+        
+        if (aPriority !== bPriority) {
+          return aPriority - bPriority;
+        }
+        
+        return new Date(b.ts).getTime() - new Date(a.ts).getTime();
+      });
     },
     refetchInterval: 30000, // Refresh every 30 seconds
   });
