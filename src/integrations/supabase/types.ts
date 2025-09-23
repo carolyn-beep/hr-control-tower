@@ -47,6 +47,13 @@ export type Database = {
             referencedRelation: "person"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "coaching_plan_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "person_directory"
+            referencedColumns: ["id"]
+          },
         ]
       }
       kpi: {
@@ -111,6 +118,13 @@ export type Database = {
             columns: ["person_id"]
             isOneToOne: false
             referencedRelation: "person"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "performance_event_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "person_directory"
             referencedColumns: ["id"]
           },
         ]
@@ -181,6 +195,13 @@ export type Database = {
             referencedRelation: "person"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "release_case_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "person_directory"
+            referencedColumns: ["id"]
+          },
         ]
       }
       risk_score: {
@@ -208,6 +229,13 @@ export type Database = {
             columns: ["person_id"]
             isOneToOne: false
             referencedRelation: "person"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "risk_score_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "person_directory"
             referencedColumns: ["id"]
           },
         ]
@@ -248,6 +276,13 @@ export type Database = {
             referencedRelation: "person"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "signal_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "person_directory"
+            referencedColumns: ["id"]
+          },
         ]
       }
       user_profiles: {
@@ -282,6 +317,27 @@ export type Database = {
       }
     }
     Views: {
+      person_directory: {
+        Row: {
+          created_at: string | null
+          department: string | null
+          id: string | null
+          name: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          department?: string | null
+          id?: string | null
+          name?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          department?: string | null
+          id?: string | null
+          name?: string | null
+        }
+        Relationships: []
+      }
       v_release_open: {
         Row: {
           email: string | null
@@ -324,6 +380,26 @@ export type Database = {
           source_link: string
           time_window: string
           value: number
+        }[]
+      }
+      get_person_details: {
+        Args: { person_id: string }
+        Returns: {
+          created_at: string
+          department: string
+          email: string
+          id: string
+          name: string
+          updated_at: string
+        }[]
+      }
+      get_person_directory: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          created_at: string
+          department: string
+          id: string
+          name: string
         }[]
       }
       get_person_profile: {
