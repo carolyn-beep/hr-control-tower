@@ -17,30 +17,27 @@ export type Database = {
       coaching_plan: {
         Row: {
           created_at: string
-          description: string | null
           id: string
+          objective: string
           person_id: string
+          playbook: string
           status: string
-          title: string
-          updated_at: string
         }
         Insert: {
           created_at?: string
-          description?: string | null
           id?: string
+          objective?: string
           person_id: string
-          status: string
-          title: string
-          updated_at?: string
+          playbook?: string
+          status?: string
         }
         Update: {
           created_at?: string
-          description?: string | null
           id?: string
+          objective?: string
           person_id?: string
+          playbook?: string
           status?: string
-          title?: string
-          updated_at?: string
         }
         Relationships: [
           {
