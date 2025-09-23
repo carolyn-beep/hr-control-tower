@@ -263,9 +263,9 @@ const SignalsTable = () => {
                                 ? 'text-warning'
                                 : 'text-warning'
                         }`}>
-                          {signal.score_delta < 0 
-                            ? `${Math.round(signal.score_delta * 10) / 10} Risk ↓`
-                            : `+${Math.round(signal.score_delta * 10) / 10} Risk ↑`
+                          {signal.score_delta > 0 
+                            ? `+${Math.round(signal.score_delta * 10) / 10} Risk ↑`
+                            : `${Math.round(signal.score_delta * 10) / 10} Risk ↓`
                           }
                         </span>
                       ) : (
