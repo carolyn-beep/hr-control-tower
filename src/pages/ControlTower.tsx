@@ -179,12 +179,14 @@ const ControlTower = () => {
     <TooltipProvider>
       <div className="min-h-screen bg-background">
         <div className="flex">
-          <ManagerlessSidebar />
+          <div className="hidden lg:block">
+            <ManagerlessSidebar />
+          </div>
           
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <ManagerlessHeader />
           
-          <main className="p-6 max-w-7xl mx-auto space-y-6">
+          <main className="p-3 sm:p-4 lg:p-6 max-w-7xl mx-auto space-y-6">
             {/* Hero Section */}
             <div className="relative overflow-hidden rounded-xl shadow-dashboard animate-fade-in">
               <div 

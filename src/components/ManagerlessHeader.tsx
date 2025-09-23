@@ -12,7 +12,7 @@ const ManagerlessHeader = () => {
   const { toast } = useToast();
 
   return (
-    <header className="bg-gradient-subtle border-b border-border px-6 py-4 shadow-soft backdrop-blur-sm sticky top-0 z-50">
+    <header className="bg-gradient-subtle border-b border-border px-3 sm:px-6 py-3 sm:py-4 shadow-soft backdrop-blur-sm sticky top-0 z-50">
       <div className="flex items-center justify-between animate-fade-in">
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-3">
@@ -20,13 +20,13 @@ const ManagerlessHeader = () => {
               <span className="text-primary-foreground font-bold text-sm">ML</span>
             </div>
             <div>
-              <h1 className="text-2xl font-bold gradient-text">Managerless HR</h1>
+              <h1 className="text-xl sm:text-2xl font-bold gradient-text">Managerless HR</h1>
               <p className="text-xs text-muted-foreground">Control Tower</p>
             </div>
           </div>
         </div>
         
-        <div className="flex items-center space-x-4 flex-1 max-w-2xl ml-8">
+        <div className="hidden md:flex items-center space-x-4 flex-1 max-w-2xl md:ml-8">
           <div className={`relative flex-1 transition-all duration-300 ${searchFocused ? 'transform scale-105' : ''}`}>
             <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground transition-colors duration-200" />
             <Command className="absolute right-3 top-3 h-4 w-4 text-muted-foreground opacity-50" />
