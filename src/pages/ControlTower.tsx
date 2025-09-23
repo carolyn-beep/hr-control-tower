@@ -250,6 +250,17 @@ const ControlTower = () => {
                   key={index} 
                   className={`relative bg-gradient-card border-border shadow-card hover:shadow-dashboard transition-all duration-500 group hover-lift animate-slide-up cursor-pointer`}
                   style={{ animationDelay: `${index * 100}ms` }}
+                  onClick={() => {
+                    if (metric.title === "Critical Signals") {
+                      navigate('/signals?level=critical');
+                    } else if (metric.title === "Risk Signals") {
+                      navigate('/signals?level=risk');
+                    } else if (metric.title === "Active Coaching") {
+                      navigate('/people');
+                    } else if (metric.title === "Recovered (7d)") {
+                      navigate('/signals?level=info');
+                    }
+                  }}
                 >
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium text-muted-foreground">
