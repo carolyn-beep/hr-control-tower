@@ -3,6 +3,7 @@ import ManagerlessSidebar from "@/components/ManagerlessSidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { 
@@ -22,7 +23,8 @@ import {
   MessageCircle,
   LogOut,
   LineChart as LineChartIcon,
-  FileText
+  FileText,
+  HelpCircle
 } from "lucide-react";
 import heroImage from "@/assets/hr-hero.jpg";
 import { useDashboardMetrics } from "@/hooks/useDashboardMetrics";
@@ -30,10 +32,12 @@ import { useRecentSignalsWithPerson } from "@/hooks/useRecentSignalsWithPerson";
 import { useRiskTrend } from "@/hooks/useRiskTrend";
 import { usePersonSignalsSummary } from "@/hooks/usePersonSignalsSummary";
 import { useIndividualRecentSignals } from "@/hooks/useIndividualRecentSignals";
+import { useReleaseSafeguards } from "@/hooks/useReleaseSafeguards";
+import { useActiveCoachingPlan } from "@/hooks/useActiveCoachingPlan";
 import { useRefreshDemoData } from "@/hooks/useRefreshDemoData";
 import { ReleaseEvaluationModal } from "@/components/ReleaseEvaluationModal";
 import { AutoCoachModal } from "@/components/AutoCoachModal";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as ChartTooltip, ResponsiveContainer } from 'recharts';
 import { useToast } from "@/hooks/use-toast";
 
 const riskMetrics = [
@@ -170,12 +174,13 @@ const ControlTower = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="flex">
-        <ManagerlessSidebar />
-        
-        <div className="flex-1">
-          <ManagerlessHeader />
+    <TooltipProvider>
+      <div className="min-h-screen bg-background">
+        <div className="flex">
+          <ManagerlessSidebar />
+          
+          <div className="flex-1">
+            <ManagerlessHeader />
           
           <main className="p-6 max-w-7xl mx-auto space-y-6">
             {/* Hero Section */}
@@ -517,23 +522,23 @@ const ControlTower = () => {
                           domain={['dataMin - 0.5', 'dataMax + 0.5']}
                           className="text-xs"
                         />
-                        <Tooltip 
-                          labelFormatter={(value) => `Date: ${new Date(value).toLocaleDateString()}`}
-                          formatter={(value, name) => {
-                            if (name === 'Avg Risk Score') {
-                              return [`${value}`, 'Risk Score'];
-                            }
-                            if (name === 'Cohort Median') {
-                              return [`${value}`, 'Cohort Median'];
-                            }
-                            return [`${value}`, name];
-                          }}
-                          contentStyle={{ 
-                            backgroundColor: 'hsl(var(--background))', 
-                            border: '1px solid hsl(var(--border))',
-                            borderRadius: '6px'
-                          }}
-                        />
+                         <ChartTooltip 
+                           labelFormatter={(value) => `Date: ${new Date(value).toLocaleDateString()}`}
+                           formatter={(value, name) => {
+                             if (name === 'Avg Risk Score') {
+                               return [`${value}`, 'Risk Score'];
+                             }
+                             if (name === 'Cohort Median') {
+                               return [`${value}`, 'Cohort Median'];
+                             }
+                             return [`${value}`, name];
+                           }}
+                           contentStyle={{ 
+                             backgroundColor: 'hsl(var(--background))', 
+                             border: '1px solid hsl(var(--border))',
+                             borderRadius: '6px'
+                           }}
+                         />
                         <Line 
                           type="monotone" 
                           dataKey="avg_risk" 
@@ -659,69 +664,157 @@ const ControlTower = () => {
                                   Risk ↓
                                 </div>
                               </div>
-                            )}
-                            {signal.level !== 'info' && (
-                              <Button 
-                                variant={signal.level === 'critical' || signal.level === 'risk' ? "gradient" : "outline"}
-                                size="sm"
-                                className="shadow-soft hover:shadow-dashboard transition-all duration-200 hover:scale-105"
-                                onClick={() => {
-                                  setSelectedPersonId(signal.person_id);
-                                  setSelectedPersonName(signal.person);
-                                  setSelectedSignalId(signal.id);
-                                  setSelectedReason(signal.reason);
-                                  
-                                  if (signal.level === 'critical' || signal.level === 'risk') {
-                                    setModalOpen(true);
-                                  } else {
-                                    setAutoCoachModalOpen(true);
-                                  }
-                                }}
-                              >
-                                {signal.level === 'critical' || signal.level === 'risk' ? (
-                                  <>
-                                    <UserCheck className="h-4 w-4 mr-2" />
-                                    Evaluate
-                                  </>
-                                ) : (
-                                  <>
-                                    <Play className="h-4 w-4 mr-2" />
-                                    Coach
-                                  </>
-                                )}
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          </main>
-        </div>
-      </div>
+                             )}
+                             {signal.level !== 'info' && (
+                               <SignalActionButton 
+                                 signal={signal}
+                                 onEvaluateClick={() => {
+                                   setSelectedPersonId(signal.person_id);
+                                   setSelectedPersonName(signal.person);
+                                   setSelectedSignalId(signal.id);
+                                   setSelectedReason(signal.reason);
+                                   setModalOpen(true);
+                                 }}
+                                 onCoachClick={() => {
+                                   setSelectedPersonId(signal.person_id);
+                                   setSelectedPersonName(signal.person);
+                                   setSelectedSignalId(signal.id);
+                                   setSelectedReason(signal.reason);
+                                   setAutoCoachModalOpen(true);
+                                 }}
+                               />
+                             )}
+                           </div>
+                         </div>
+                       );
+                     })
+                   )}
+                 </div>
+               </CardContent>
+             </Card>
+           </main>
+         </div>
+       </div>
+       
+       <ReleaseEvaluationModal
+         open={modalOpen}
+         onOpenChange={setModalOpen}
+         personId={selectedPersonId}
+         personName={selectedPersonName}
+         signalId={selectedSignalId}
+         reason={selectedReason}
+       />
+       
+       <AutoCoachModal
+         open={autoCoachModalOpen}
+         onOpenChange={setAutoCoachModalOpen}
+         personId={selectedPersonId}
+         personName={selectedPersonName}
+         signalId={selectedSignalId}
+         reason={selectedReason}
+       />
+     </div>
+     </TooltipProvider>
+   );
+ };
+
+// Component for signal action buttons with safeguards
+const SignalActionButton = ({ 
+  signal, 
+  onEvaluateClick, 
+  onCoachClick 
+}: { 
+  signal: any; 
+  onEvaluateClick: () => void; 
+  onCoachClick: () => void; 
+}) => {
+  const { data: safeguards } = useReleaseSafeguards(signal.person_id);
+  const { data: activeCoaching } = useActiveCoachingPlan(signal.person_id);
+  
+  const canRelease = safeguards?.tenure_ok && safeguards?.data_ok && safeguards?.coach_ok;
+  const canCoach = !activeCoaching; // Can only start coaching if no active plan
+  
+  if (signal.level === 'critical' || signal.level === 'risk') {
+    // Release evaluation button
+    if (!canRelease) {
+      const unmetChecks = [];
+      if (!safeguards?.tenure_ok) unmetChecks.push("90+ days tenure required");
+      if (!safeguards?.data_ok) unmetChecks.push("Need 3+ data points in last 30 days");
+      if (!safeguards?.coach_ok) unmetChecks.push("No completed coaching cycles");
       
-      <ReleaseEvaluationModal
-        open={modalOpen}
-        onOpenChange={setModalOpen}
-        personId={selectedPersonId}
-        personName={selectedPersonName}
-        signalId={selectedSignalId}
-        reason={selectedReason}
-      />
-      
-      <AutoCoachModal
-        open={autoCoachModalOpen}
-        onOpenChange={setAutoCoachModalOpen}
-        personId={selectedPersonId}
-        personName={selectedPersonName}
-        signalId={selectedSignalId}
-        reason={selectedReason}
-      />
-    </div>
-  );
+      return (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button 
+              variant="outline"
+              size="sm"
+              disabled
+              className="shadow-soft cursor-not-allowed opacity-50"
+            >
+              <XCircle className="h-4 w-4 mr-2" />
+              Cannot Evaluate
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <div className="text-xs">
+              <div className="font-semibold mb-1">Unmet safeguards:</div>
+              {unmetChecks.map((check, idx) => (
+                <div key={idx}>• {check}</div>
+              ))}
+            </div>
+          </TooltipContent>
+        </Tooltip>
+      );
+    }
+    
+    return (
+      <Button 
+        variant="gradient"
+        size="sm"
+        className="shadow-soft hover:shadow-dashboard transition-all duration-200 hover:scale-105"
+        onClick={onEvaluateClick}
+      >
+        <UserCheck className="h-4 w-4 mr-2" />
+        Evaluate
+      </Button>
+    );
+  } else {
+    // Coaching button
+    if (!canCoach) {
+      return (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button 
+              variant="outline"
+              size="sm"
+              disabled
+              className="shadow-soft cursor-not-allowed opacity-50"
+            >
+              <XCircle className="h-4 w-4 mr-2" />
+              Cannot Coach
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <div className="text-xs">
+              Active coaching plan already exists for this person
+            </div>
+          </TooltipContent>
+        </Tooltip>
+      );
+    }
+    
+    return (
+      <Button 
+        variant="outline"
+        size="sm"
+        className="shadow-soft hover:shadow-dashboard transition-all duration-200 hover:scale-105"
+        onClick={onCoachClick}
+      >
+        <Play className="h-4 w-4 mr-2" />
+        Coach
+      </Button>
+    );
+  }
 };
 
 export default ControlTower;
