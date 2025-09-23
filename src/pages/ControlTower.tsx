@@ -658,24 +658,19 @@ const ControlTower = () => {
                           <div className="flex items-center space-x-3">
                             {signal.score_delta && signal.score_delta !== 0 && (
                               <div className="text-right">
-                                <div className={`text-sm font-semibold ${signal.score_delta < 0 ? 'text-success' : 'text-destructive'}`}>
-                                  {signal.score_delta >= 0 
-                                    ? `+${Math.round(signal.score_delta * 10) / 10}` 
-                                    : `${Math.round(signal.score_delta * 10) / 10}`
+                                <div className={`text-sm font-semibold ${
+                                  signal.score_delta < 0 
+                                    ? 'text-success' 
+                                    : signal.level === 'critical' 
+                                      ? 'text-destructive'
+                                      : signal.level === 'risk'
+                                        ? 'text-warning'
+                                        : 'text-warning'
+                                }`}>
+                                  {signal.score_delta < 0 
+                                    ? `${Math.round(signal.score_delta * 10) / 10} Risk ↓`
+                                    : `+${Math.round(signal.score_delta * 10) / 10} Risk ↑`
                                   }
-                                </div>
-                                <div className={`text-xs flex items-center ${signal.score_delta < 0 ? 'text-success' : 'text-destructive'}`}>
-                                  {signal.score_delta < 0 ? (
-                                    <>
-                                      <ArrowDown className="h-3 w-3 mr-1" />
-                                      Risk ↓
-                                    </>
-                                  ) : (
-                                    <>
-                                      <ArrowUp className="h-3 w-3 mr-1" />
-                                      Risk ↑
-                                    </>
-                                  )}
                                 </div>
                               </div>
                             )}
@@ -744,89 +739,57 @@ const SignalActionButton = ({
   const { data: activeCoaching } = useActiveCoachingPlan(signal.person_id);
   const recognizeAndCloseLoop = useRecognizeAndCloseLoop();
   
-  if (signal.level === 'critical' || signal.level === 'risk') {
+  if (signal.action_type === 'release') {
     // Release evaluation button - disable only if tenure < 21 days OR evidence < 3 in last 14 days
     const canRelease = safeguards?.tenure_ok && safeguards?.data_ok;
     
-    if (!canRelease) {
-      return (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button 
-              variant="outline"
-              size="sm"
-              disabled
-              className="shadow-soft cursor-not-allowed opacity-50"
-            >
-              <XCircle className="h-4 w-4 mr-2" />
-              Cannot Evaluate
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <div className="text-xs">
-              Needs 21+ days tenure and 3+ evidence points in last 14 days.
-            </div>
-          </TooltipContent>
-        </Tooltip>
-      );
-    }
-    
     return (
       <Button 
-        variant="gradient"
+        variant="outline"
         size="sm"
-        className="shadow-soft hover:shadow-dashboard transition-all duration-200 hover:scale-105"
-        onClick={onEvaluateClick}
+        disabled={!canRelease}
+        className={`shadow-soft transition-all duration-200 ${
+          canRelease 
+            ? 'hover:shadow-dashboard hover:scale-105 bg-purple-500/10 border-purple-500/20 text-purple-600 hover:bg-purple-500/20'
+            : 'cursor-not-allowed opacity-50'
+        }`}
+        onClick={canRelease ? onEvaluateClick : undefined}
       >
         <UserCheck className="h-4 w-4 mr-2" />
         Evaluate for Release
       </Button>
     );
-  } else if (signal.level === 'warn' || signal.level === 'warning') {
+  }
+  
+  if (signal.action_type === 'coach') {
     // Auto-coaching button - disable only if active coaching plan exists
     const canCoach = !activeCoaching;
     
-    if (!canCoach) {
-      return (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button 
-              variant="outline"
-              size="sm"
-              disabled
-              className="shadow-soft cursor-not-allowed opacity-50"
-            >
-              <XCircle className="h-4 w-4 mr-2" />
-              Cannot Coach
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <div className="text-xs">
-              Active coaching plan already exists for this person
-            </div>
-          </TooltipContent>
-        </Tooltip>
-      );
-    }
-    
     return (
       <Button 
-        variant="gradient"
+        variant="outline"
         size="sm"
-        className="shadow-soft hover:shadow-dashboard transition-all duration-200 hover:scale-105"
-        onClick={onCoachClick}
+        disabled={!canCoach}
+        className={`shadow-soft transition-all duration-200 ${
+          canCoach 
+            ? 'hover:shadow-dashboard hover:scale-105 bg-blue-500/10 border-blue-500/20 text-blue-600 hover:bg-blue-500/20'
+            : 'cursor-not-allowed opacity-50'
+        }`}
+        onClick={canCoach ? onCoachClick : undefined}
       >
         <Bot className="h-4 w-4 mr-2" />
         Start Auto-Coach
       </Button>
     );
-  } else if (signal.level === 'info') {
+  }
+  
+  if (signal.action_type === 'kudos') {
     // Recognize & Close Loop button
     return (
       <Button 
-        variant="gradient"
+        variant="outline"
         size="sm"
-        className="shadow-soft hover:shadow-dashboard transition-all duration-200 hover:scale-105"
+        className="shadow-soft hover:shadow-dashboard transition-all duration-200 hover:scale-105 bg-green-500/10 border-green-500/20 text-green-600 hover:bg-green-500/20"
         onClick={() => recognizeAndCloseLoop.mutate({ personId: signal.person_id })}
         disabled={recognizeAndCloseLoop.isPending}
       >
