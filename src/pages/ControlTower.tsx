@@ -3,6 +3,7 @@ import ManagerlessSidebar from "@/components/ManagerlessSidebar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useState } from "react";
 import { 
   AlertTriangle, 
   TrendingUp, 
@@ -11,11 +12,14 @@ import {
   Activity,
   Clock,
   CheckCircle,
-  XCircle
+  XCircle,
+  UserCheck,
+  Play
 } from "lucide-react";
 import heroImage from "@/assets/hr-hero.jpg";
 import { useDashboardMetrics } from "@/hooks/useDashboardMetrics";
-import { useRecentSignals } from "@/hooks/useRecentSignals";
+import { useRecentSignalsWithPerson } from "@/hooks/useRecentSignalsWithPerson";
+import { ReleaseEvaluationModal } from "@/components/ReleaseEvaluationModal";
 
 const riskMetrics = [
   {
@@ -93,7 +97,10 @@ const recentSignals = [
 
 const ControlTower = () => {
   const { data: metrics, isLoading, error } = useDashboardMetrics();
-  const { data: recentSignals, isLoading: signalsLoading } = useRecentSignals();
+  const { data: recentSignals, isLoading: signalsLoading } = useRecentSignalsWithPerson();
+  const [selectedPersonId, setSelectedPersonId] = useState<string>('');
+  const [selectedPersonName, setSelectedPersonName] = useState<string>('');
+  const [modalOpen, setModalOpen] = useState(false);
 
   // Create dynamic risk metrics based on real data
   const riskMetrics = [
@@ -322,147 +329,68 @@ const ControlTower = () => {
                     </div>
                   ) : (
                     recentSignals.map((signal, index) => {
-                      // Calculate time ago
-                      const timeAgo = new Date(signal.ts);
-                      const now = new Date();
-                      const diffHours = Math.floor((now.getTime() - timeAgo.getTime()) / (1000 * 60 * 60));
-                      const timeString = diffHours < 1 ? "< 1h ago" : 
-                                       diffHours < 24 ? `${diffHours}h ago` : 
-                                       `${Math.floor(diffHours / 24)}d ago`;
-
-                      // Determine status based on level
-                      const getStatus = (level: string) => {
-                        switch(level) {
-                          case 'critical': return 'Manager Alert';
-                          case 'risk': return 'Auto-Coaching';
-                          case 'warning': return 'Monitoring';
-                          default: return 'Monitoring';
+                      const getBadgeVariant = (level: string) => {
+                        switch (level.toLowerCase()) {
+                          case 'critical': return 'destructive';
+                          case 'risk': return 'default';
+                          case 'warn': return 'secondary';
+                          case 'info': return 'outline';
+                          default: return 'outline';
                         }
                       };
 
-                      const getSeverityConfig = (level: string) => {
-                        switch(level) {
-                          case 'critical': return {
-                            color: 'bg-destructive',
-                            textColor: 'text-destructive',
-                            badgeVariant: 'destructive' as const,
-                            priority: 'CRITICAL'
-                          };
-                          case 'risk': return {
-                            color: 'bg-warning',
-                            textColor: 'text-warning',
-                            badgeVariant: 'secondary' as const,
-                            priority: 'HIGH'
-                          };
-                          case 'warning': return {
-                            color: 'bg-primary',
-                            textColor: 'text-primary',
-                            badgeVariant: 'outline' as const,
-                            priority: 'MEDIUM'
-                          };
-                          default: return {
-                            color: 'bg-muted-foreground',
-                            textColor: 'text-muted-foreground',
-                            badgeVariant: 'outline' as const,
-                            priority: 'LOW'
-                          };
+                      const getBadgeColor = (level: string) => {
+                        switch (level.toLowerCase()) {
+                          case 'critical': return 'text-destructive border-destructive';
+                          case 'risk': return 'text-orange-600 border-orange-600';
+                          case 'warn': return 'text-yellow-600 border-yellow-600';
+                          case 'info': return 'text-muted-foreground border-muted-foreground';
+                          default: return 'text-muted-foreground border-muted-foreground';
                         }
                       };
 
-                      const getStatusConfig = (level: string) => {
-                        switch(level) {
-                          case 'critical': return {
-                            variant: 'destructive' as const,
-                            icon: <XCircle className="h-4 w-4" />,
-                            actionable: true
-                          };
-                          case 'risk': return {
-                            variant: 'default' as const,
-                            icon: <Clock className="h-4 w-4" />,
-                            actionable: true
-                          };
-                          default: return {
-                            variant: 'secondary' as const,
-                            icon: <Clock className="h-4 w-4" />,
-                            actionable: false
-                          };
-                        }
+                      const getButtonText = (level: string) => {
+                        return ['risk', 'critical'].includes(level.toLowerCase()) 
+                          ? 'Evaluate for Release' 
+                          : 'Start Auto-Coach';
                       };
 
-                      const severityConfig = getSeverityConfig(signal.level);
-                      const statusConfig = getStatusConfig(signal.level);
+                      const getButtonIcon = (level: string) => {
+                        return ['risk', 'critical'].includes(level.toLowerCase()) 
+                          ? <UserCheck className="h-4 w-4 mr-2" />
+                          : <Play className="h-4 w-4 mr-2" />;
+                      };
 
                       return (
                         <div 
-                          key={index} 
-                          className={`group relative p-4 rounded-lg border transition-all duration-200 hover:shadow-md ${
-                            signal.level === 'critical' 
-                              ? 'bg-destructive/5 border-destructive/20 hover:bg-destructive/10' 
-                              : signal.level === 'risk'
-                              ? 'bg-warning/5 border-warning/20 hover:bg-warning/10'
-                              : 'bg-accent hover:bg-accent/80 border-border'
-                          }`}
+                          key={signal.id} 
+                          className="flex items-center justify-between p-4 rounded-lg border bg-accent/30 hover:bg-accent/50 transition-colors"
                         >
-                          <div className="flex items-start justify-between">
-                            <div className="flex items-start space-x-4 flex-1">
-                               {/* Enhanced severity indicator */}
-                               <div className="flex items-center space-x-2">
-                                 <div className={`w-4 h-4 rounded-full ${severityConfig.color} shadow-sm flex-shrink-0`}></div>
-                                 <Badge 
-                                   variant={severityConfig.badgeVariant}
-                                   className="text-xs font-bold px-2 py-1"
-                                 >
-                                   {severityConfig.priority}
-                                 </Badge>
-                               </div>
-                              
-                               <div className="flex-1 space-y-2">
-                                 {/* Employee and reason */}
-                                 <div>
-                                   <div className="flex items-center space-x-2 mb-1">
-                                     <span className="font-bold text-foreground text-lg">{signal.name}</span>
-                                     <span className="text-muted-foreground">•</span>
-                                     <span className="text-foreground font-medium">{signal.reason}</span>
-                                   </div>
-                                   
-                                   {/* Enhanced badges and time */}
-                                   <div className="flex items-center space-x-3">
-                                     <span className="text-sm text-muted-foreground flex items-center">
-                                       <Clock className="h-3 w-3 mr-1" />
-                                       {timeString}
-                                     </span>
-                                   </div>
-                                 </div>
-                               </div>
-                            </div>
-                            
-                            {/* Enhanced status and actions */}
-                            <div className="flex items-center space-x-3 ml-4">
-                              <div className="text-right space-y-2">
-                                <Badge 
-                                  variant={statusConfig.variant}
-                                  className="flex items-center space-x-1 px-3 py-1"
-                                >
-                                  {statusConfig.icon}
-                                  <span className="ml-1">{getStatus(signal.level)}</span>
-                                </Badge>
-                                
-                                {/* Action button for critical/risk signals */}
-                                {statusConfig.actionable && (
-                                  <Button 
-                                    size="sm" 
-                                    variant={signal.level === 'critical' ? 'destructive' : 'default'}
-                                    className="w-full"
-                                  >
-                                    {signal.level === 'critical' ? 'Review Alert' : 'View Details'}
-                                  </Button>
-                                )}
-                              </div>
+                          <div className="flex items-center space-x-4 flex-1">
+                            <Badge 
+                              variant="outline" 
+                              className={`font-bold ${getBadgeColor(signal.level)}`}
+                            >
+                              {signal.level.toUpperCase()}
+                            </Badge>
+                            <div className="flex-1">
+                              <div className="font-semibold text-foreground">{signal.person}</div>
+                              <div className="text-sm text-muted-foreground">{signal.reason}</div>
                             </div>
                           </div>
                           
-                          {/* Subtle hover effect */}
-                          <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none" />
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => {
+                              setSelectedPersonId(signal.person_id);
+                              setSelectedPersonName(signal.person);
+                              setModalOpen(true);
+                            }}
+                          >
+                            {getButtonIcon(signal.level)}
+                            {getButtonText(signal.level)}
+                          </Button>
                         </div>
                       );
                     })
@@ -473,6 +401,13 @@ const ControlTower = () => {
           </main>
         </div>
       </div>
+      
+      <ReleaseEvaluationModal
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        personId={selectedPersonId}
+        personName={selectedPersonName}
+      />
     </div>
   );
 };
