@@ -147,11 +147,11 @@ const ControlTower = () => {
         <div className="flex-1">
           <ManagerlessHeader />
           
-          <main className="p-6">
+          <main className="p-8 space-y-8">
             {/* Hero Section */}
-            <div className="mb-8 relative overflow-hidden rounded-lg">
+            <div className="relative overflow-hidden rounded-xl shadow-lg">
               <div 
-                className="h-48 bg-gradient-hero rounded-lg flex items-center justify-between px-8"
+                className="h-56 bg-gradient-hero rounded-xl flex items-center justify-between px-10"
                 style={{ 
                   backgroundImage: `linear-gradient(135deg, hsla(241, 79%, 52%, 0.9), hsla(260, 85%, 60%, 0.9)), url(${heroImage})`,
                   backgroundSize: 'cover',
@@ -159,16 +159,16 @@ const ControlTower = () => {
                 }}
               >
                 <div className="text-primary-foreground">
-                  <h2 className="text-3xl font-bold mb-2">Managerless HR Control Tower</h2>
-                  <p className="text-lg opacity-90">AI-powered risk detection and automated coaching without traditional management</p>
+                  <h1 className="text-4xl font-bold mb-3">Managerless HR Control Tower</h1>
+                  <p className="text-xl opacity-90">AI-powered risk detection and automated coaching without traditional management</p>
                 </div>
-                <div className="flex space-x-3">
-                  <Button variant="secondary" className="bg-white/20 text-white border-white/30 hover:bg-white/30">
-                    <Activity className="mr-2 h-4 w-4" />
+                <div className="flex space-x-4">
+                  <Button variant="secondary" className="bg-white/20 text-white border-white/30 hover:bg-white/30 px-6 py-3">
+                    <Activity className="mr-2 h-5 w-5" />
                     View Signals
                   </Button>
-                  <Button variant="secondary" className="bg-white/20 text-white border-white/30 hover:bg-white/30">
-                    <Bot className="mr-2 h-4 w-4" />
+                  <Button variant="secondary" className="bg-white/20 text-white border-white/30 hover:bg-white/30 px-6 py-3">
+                    <Bot className="mr-2 h-5 w-5" />
                     AI Insights
                   </Button>
                 </div>
@@ -299,22 +299,26 @@ const ControlTower = () => {
 
             {/* Recent Signals */}
             <Card className="bg-gradient-card border-border shadow-card">
-              <CardHeader>
+              <CardHeader className="pb-6">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-xl font-semibold text-foreground">Recent Signals</CardTitle>
-                  <Button variant="outline">View All Signals</Button>
+                  <CardTitle className="text-2xl font-bold text-foreground">Recent Signals</CardTitle>
+                  <Button variant="outline" className="hover:bg-primary/5 px-6">View All Signals</Button>
                 </div>
               </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
+              <CardContent className="px-6 pb-6">
+                <div className="space-y-4">
                   {signalsLoading ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <div className="animate-pulse">Loading signals...</div>
+                    <div className="text-center py-12 text-muted-foreground">
+                      <div className="animate-pulse flex flex-col items-center space-y-3">
+                        <div className="w-8 h-8 bg-muted rounded-full"></div>
+                        <p>Loading signals...</p>
+                      </div>
                     </div>
                   ) : !recentSignals || recentSignals.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <AlertTriangle className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                      <p>No recent signals</p>
+                    <div className="text-center py-12 text-muted-foreground">
+                      <AlertTriangle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p className="text-lg">No recent signals</p>
+                      <p className="text-sm">All systems are running smoothly</p>
                     </div>
                   ) : (
                     recentSignals.map((signal, index) => {
@@ -401,38 +405,35 @@ const ControlTower = () => {
                         >
                           <div className="flex items-start justify-between">
                             <div className="flex items-start space-x-4 flex-1">
-                              {/* Enhanced severity indicator */}
-                              <div className="flex flex-col items-center space-y-1 mt-1">
-                                <div className={`w-4 h-4 rounded-full ${severityConfig.color} shadow-sm`}></div>
-                                <div className={`text-xs font-medium ${severityConfig.textColor} rotate-90 whitespace-nowrap`}>
-                                  {severityConfig.priority}
-                                </div>
-                              </div>
+                               {/* Enhanced severity indicator */}
+                               <div className="flex items-center space-x-2">
+                                 <div className={`w-4 h-4 rounded-full ${severityConfig.color} shadow-sm flex-shrink-0`}></div>
+                                 <Badge 
+                                   variant={severityConfig.badgeVariant}
+                                   className="text-xs font-bold px-2 py-1"
+                                 >
+                                   {severityConfig.priority}
+                                 </Badge>
+                               </div>
                               
-                              <div className="flex-1 space-y-2">
-                                {/* Employee and reason */}
-                                <div>
-                                  <div className="flex items-center space-x-2 mb-1">
-                                    <span className="font-semibold text-foreground text-lg">{signal.name}</span>
-                                    <span className="text-muted-foreground">•</span>
-                                    <span className="text-foreground font-medium">{signal.reason}</span>
-                                  </div>
-                                  
-                                  {/* Enhanced badges and time */}
-                                  <div className="flex items-center space-x-3">
-                                    <Badge 
-                                      variant={severityConfig.badgeVariant}
-                                      className="text-xs font-semibold px-2 py-1"
-                                    >
-                                      {signal.level.toUpperCase()}
-                                    </Badge>
-                                    <span className="text-sm text-muted-foreground flex items-center">
-                                      <Clock className="h-3 w-3 mr-1" />
-                                      {timeString}
-                                    </span>
-                                  </div>
-                                </div>
-                              </div>
+                               <div className="flex-1 space-y-2">
+                                 {/* Employee and reason */}
+                                 <div>
+                                   <div className="flex items-center space-x-2 mb-1">
+                                     <span className="font-bold text-foreground text-lg">{signal.name}</span>
+                                     <span className="text-muted-foreground">•</span>
+                                     <span className="text-foreground font-medium">{signal.reason}</span>
+                                   </div>
+                                   
+                                   {/* Enhanced badges and time */}
+                                   <div className="flex items-center space-x-3">
+                                     <span className="text-sm text-muted-foreground flex items-center">
+                                       <Clock className="h-3 w-3 mr-1" />
+                                       {timeString}
+                                     </span>
+                                   </div>
+                                 </div>
+                               </div>
                             </div>
                             
                             {/* Enhanced status and actions */}
