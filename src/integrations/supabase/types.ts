@@ -183,7 +183,18 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      v_release_open: {
+        Row: {
+          email: string | null
+          id: string | null
+          name: string | null
+          opened_at: string | null
+          reason: string | null
+          risk_score: number | null
+          status: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never
