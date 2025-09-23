@@ -4,6 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { EvidenceModal } from "@/components/EvidenceModal";
+import { useReleaseOpen } from "@/hooks/useReleaseOpen";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 import { 
   GitBranch, 
   Play, 
@@ -14,7 +20,9 @@ import {
   CheckCircle,
   AlertTriangle,
   Users,
-  TrendingUp
+  TrendingUp,
+  Eye,
+  Zap
 } from "lucide-react";
 
 const workflows = [
@@ -102,6 +110,57 @@ const workflows = [
 ];
 
 const Workflows = () => {
+  const { data: releaseCases, isLoading, refetch } = useReleaseOpen();
+  const { toast } = useToast();
+  const [selectedEvidence, setSelectedEvidence] = useState<any>(null);
+  const [selectedPersonName, setSelectedPersonName] = useState<string>("");
+  const [evidenceModalOpen, setEvidenceModalOpen] = useState(false);
+
+  const handleViewEvidence = async (releaseId: string, personName: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('release_case')
+        .select('evidence')
+        .eq('id', releaseId)
+        .single();
+
+      if (error) throw error;
+
+      setSelectedEvidence(data.evidence);
+      setSelectedPersonName(personName);
+      setEvidenceModalOpen(true);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load evidence",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleExecute = async (releaseId: string) => {
+    try {
+      const { error } = await supabase
+        .from('release_case')
+        .update({ status: 'executed' })
+        .eq('id', releaseId);
+
+      if (error) throw error;
+
+      toast({
+        title: "Success",
+        description: "Release case executed successfully",
+      });
+      refetch();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to execute release case",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="flex">
@@ -164,6 +223,81 @@ const Workflows = () => {
                 </CardContent>
               </Card>
             </div>
+
+            {/* Release Cases */}
+            <Card className="mb-8 bg-gradient-card border-border shadow-card">
+              <CardHeader>
+                <CardTitle className="text-xl font-semibold text-foreground">Release Cases</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {isLoading ? (
+                  <div className="text-center py-4">Loading...</div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Opened At</TableHead>
+                        <TableHead>Reason</TableHead>
+                        <TableHead>Risk Score</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {releaseCases?.map((releaseCase) => (
+                        <TableRow key={releaseCase.id}>
+                          <TableCell className="font-medium">{releaseCase.name}</TableCell>
+                          <TableCell>{releaseCase.email}</TableCell>
+                          <TableCell>{new Date(releaseCase.opened_at).toLocaleDateString()}</TableCell>
+                          <TableCell>{releaseCase.reason}</TableCell>
+                          <TableCell>{releaseCase.risk_score}</TableCell>
+                          <TableCell>
+                            <Badge 
+                              variant={
+                                releaseCase.status === 'approved' ? 'default' : 
+                                releaseCase.status === 'executed' ? 'secondary' : 
+                                'outline'
+                              }
+                              className={
+                                releaseCase.status === 'approved' ? 'bg-success text-success-foreground' :
+                                releaseCase.status === 'executed' ? 'bg-secondary text-secondary-foreground' :
+                                ''
+                              }
+                            >
+                              {releaseCase.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex space-x-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleViewEvidence(releaseCase.id, releaseCase.name)}
+                              >
+                                <Eye className="h-4 w-4 mr-1" />
+                                Evidence
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={releaseCase.status !== 'approved'}
+                                onClick={() => handleExecute(releaseCase.id)}
+                                className={releaseCase.status === 'approved' ? 'bg-primary text-primary-foreground hover:bg-primary/90' : ''}
+                              >
+                                <Zap className="h-4 w-4 mr-1" />
+                                Execute
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </CardContent>
+            </Card>
 
             {/* Workflows */}
             <div className="space-y-6">
@@ -309,6 +443,13 @@ const Workflows = () => {
           </main>
         </div>
       </div>
+      
+      <EvidenceModal
+        isOpen={evidenceModalOpen}
+        onClose={() => setEvidenceModalOpen(false)}
+        evidence={selectedEvidence}
+        personName={selectedPersonName}
+      />
     </div>
   );
 };
