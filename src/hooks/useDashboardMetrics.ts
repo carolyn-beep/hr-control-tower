@@ -12,33 +12,35 @@ export const useDashboardMetrics = () => {
   return useQuery({
     queryKey: ['dashboard-metrics'],
     queryFn: async (): Promise<DashboardMetrics> => {
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
       // Get critical signals count (last 7 days)
-      const { data: criticalData, error: criticalError } = await supabase
+      const { count: criticalCount, error: criticalError } = await supabase
         .from('signal')
         .select('*', { count: 'exact', head: true })
         .eq('level', 'critical')
-        .gte('ts', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
+        .gte('ts', sevenDaysAgo);
 
       if (criticalError) throw criticalError;
 
       // Get risk signals count (last 7 days)
-      const { data: riskData, error: riskError } = await supabase
+      const { count: riskCount, error: riskError } = await supabase
         .from('signal')
         .select('*', { count: 'exact', head: true })
         .eq('level', 'risk')
-        .gte('ts', new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString());
+        .gte('ts', sevenDaysAgo);
 
       if (riskError) throw riskError;
 
       // Get active coaching plans count
-      const { data: coachingData, error: coachingError } = await supabase
+      const { count: coachingCount, error: coachingError } = await supabase
         .from('coaching_plan')
         .select('*', { count: 'exact', head: true })
         .eq('status', 'active');
 
       if (coachingError) throw coachingError;
 
-      // Get average risk score
+      // Get average risk score (rounded to 1 decimal place)
       const { data: riskScoreData, error: riskScoreError } = await supabase
         .from('risk_score')
         .select('score');
@@ -50,9 +52,9 @@ export const useDashboardMetrics = () => {
         : 0;
 
       return {
-        criticalSignals: criticalData?.length || 0,
-        riskSignals: riskData?.length || 0,
-        activeCoachingPlans: coachingData?.length || 0,
+        criticalSignals: criticalCount || 0,
+        riskSignals: riskCount || 0,
+        activeCoachingPlans: coachingCount || 0,
         avgRiskScore
       };
     },
