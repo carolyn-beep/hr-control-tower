@@ -14,7 +14,135 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      coaching_plan: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          person_id: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          person_id: string
+          status: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          person_id?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "coaching_plan_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "person"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      person: {
+        Row: {
+          created_at: string
+          department: string | null
+          email: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          department?: string | null
+          email?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          department?: string | null
+          email?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      risk_score: {
+        Row: {
+          calculated_at: string
+          id: string
+          person_id: string
+          score: number
+        }
+        Insert: {
+          calculated_at?: string
+          id?: string
+          person_id: string
+          score: number
+        }
+        Update: {
+          calculated_at?: string
+          id?: string
+          person_id?: string
+          score?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "risk_score_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "person"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      signal: {
+        Row: {
+          created_at: string
+          id: string
+          level: string
+          person_id: string
+          reason: string
+          ts: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          level: string
+          person_id: string
+          reason: string
+          ts?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          level?: string
+          person_id?: string
+          reason?: string
+          ts?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "signal_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "person"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

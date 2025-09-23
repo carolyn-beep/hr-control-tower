@@ -14,6 +14,7 @@ import {
   XCircle
 } from "lucide-react";
 import heroImage from "@/assets/hr-hero.jpg";
+import { useDashboardMetrics } from "@/hooks/useDashboardMetrics";
 
 const riskMetrics = [
   {
@@ -90,6 +91,52 @@ const recentSignals = [
 ];
 
 const ControlTower = () => {
+  const { data: metrics, isLoading, error } = useDashboardMetrics();
+
+  // Create dynamic risk metrics based on real data
+  const riskMetrics = [
+    {
+      title: "Critical Signals",
+      value: isLoading ? "..." : (metrics?.criticalSignals.toString() || "0"),
+      change: "+2",
+      trend: "up",
+      icon: AlertTriangle,
+      color: "text-destructive",
+      bgColor: "bg-destructive/10"
+    },
+    {
+      title: "Risk Signals",
+      value: isLoading ? "..." : (metrics?.riskSignals.toString() || "0"),
+      change: "+1", 
+      trend: "up",
+      icon: Activity,
+      color: "text-warning",
+      bgColor: "bg-warning/10"
+    },
+    {
+      title: "Active Coaching",
+      value: isLoading ? "..." : (metrics?.activeCoachingPlans.toString() || "0"),
+      change: "+3",
+      trend: "up",
+      icon: Bot,
+      color: "text-primary",
+      bgColor: "bg-primary/10"
+    },
+    {
+      title: "Avg Risk Score",
+      value: isLoading ? "..." : (metrics?.avgRiskScore.toString() || "0.0"),
+      change: "-0.2",
+      trend: "down", 
+      icon: CheckCircle,
+      color: "text-success",
+      bgColor: "bg-success/10"
+    },
+  ];
+
+  if (error) {
+    console.error('Dashboard metrics error:', error);
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <div className="flex">
