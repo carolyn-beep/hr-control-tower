@@ -51,58 +51,52 @@ export type Database = {
       }
       kpi: {
         Row: {
-          created_at: string
-          description: string | null
-          higher_is_better: boolean | null
+          direction: string
           id: string
           name: string
-          unit: string | null
+          unit: string
         }
         Insert: {
-          created_at?: string
-          description?: string | null
-          higher_is_better?: boolean | null
-          id?: string
+          direction: string
+          id: string
           name: string
-          unit?: string | null
+          unit: string
         }
         Update: {
-          created_at?: string
-          description?: string | null
-          higher_is_better?: boolean | null
+          direction?: string
           id?: string
           name?: string
-          unit?: string | null
+          unit?: string
         }
         Relationships: []
       }
       performance_event: {
         Row: {
-          created_at: string
           id: string
-          kpi_id: string
+          kpi_id: string | null
+          meta: Json | null
           person_id: string
-          source: string | null
+          source: string
           ts: string
-          value: number
+          value: number | null
         }
         Insert: {
-          created_at?: string
           id?: string
-          kpi_id: string
+          kpi_id?: string | null
+          meta?: Json | null
           person_id: string
-          source?: string | null
+          source: string
           ts?: string
-          value: number
+          value?: number | null
         }
         Update: {
-          created_at?: string
           id?: string
-          kpi_id?: string
+          kpi_id?: string | null
+          meta?: Json | null
           person_id?: string
-          source?: string | null
+          source?: string
           ts?: string
-          value?: number
+          value?: number | null
         }
         Relationships: [
           {
