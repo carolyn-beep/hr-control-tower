@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { 
   AlertTriangle, 
   TrendingUp, 
@@ -99,6 +100,7 @@ const recentSignals = [
 const ControlTower = () => {
   const { data: metrics, isLoading, error } = useDashboardMetrics();
   const { data: recentSignals, isLoading: signalsLoading } = useRecentSignalsWithPerson();
+  const navigate = useNavigate();
   const [selectedPersonId, setSelectedPersonId] = useState<string>('');
   const [selectedPersonName, setSelectedPersonName] = useState<string>('');
   const [selectedSignalId, setSelectedSignalId] = useState<string>('');
@@ -313,7 +315,13 @@ const ControlTower = () => {
               <CardHeader className="pb-4">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-lg font-semibold text-foreground">Recent Signals</CardTitle>
-                  <Button variant="outline" className="hover:bg-primary/5">View All Signals</Button>
+                  <Button 
+                    variant="outline" 
+                    className="hover:bg-primary/5"
+                    onClick={() => navigate('/signals?level=risk,critical&sort=ts_desc')}
+                  >
+                    View All Signals
+                  </Button>
                 </div>
               </CardHeader>
               <CardContent>

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -11,20 +11,47 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { CalendarIcon, Filter, Loader2, UserCheck } from "lucide-react";
 import { useSignalsData } from "@/hooks/useSignalsData";
 import { ReleaseEvaluationModal } from "@/components/ReleaseEvaluationModal";
+import { useSearchParams } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 const SignalsTable = () => {
-  const [levelFilter, setLevelFilter] = useState<string>('all');
+  const [searchParams] = useSearchParams();
+  
+  // Get initial filters from URL parameters
+  const getInitialLevelFilter = () => {
+    const levelParam = searchParams.get('level');
+    if (levelParam) {
+      // Handle multiple levels like "risk,critical"
+      const levels = levelParam.split(',');
+      if (levels.length === 1) {
+        return levels[0];
+      } else if (levels.includes('risk') && levels.includes('critical')) {
+        return 'risk_critical'; // Special value for risk+critical combo
+      }
+    }
+    return 'all';
+  };
+
+  const [levelFilter, setLevelFilter] = useState<string>(getInitialLevelFilter());
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
   const [selectedPersonId, setSelectedPersonId] = useState<string>('');
   const [selectedPersonName, setSelectedPersonName] = useState<string>('');
   const [modalOpen, setModalOpen] = useState(false);
 
+  // Modify levelFilter for API call
+  const getApiLevelFilter = () => {
+    if (levelFilter === 'risk_critical') {
+      return 'risk'; // We'll handle multiple levels in the hook
+    }
+    return levelFilter;
+  };
+
   const { data: signals, isLoading, error } = useSignalsData({
-    levelFilter: levelFilter,
+    levelFilter: getApiLevelFilter(),
     startDate: startDate?.toISOString(),
-    endDate: endDate?.toISOString()
+    endDate: endDate?.toISOString(),
+    multipleLevels: levelFilter === 'risk_critical' ? ['risk', 'critical'] : undefined
   });
 
   const getBadgeVariant = (level: string) => {
@@ -71,6 +98,7 @@ const SignalsTable = () => {
                 <SelectItem value="all">All Levels</SelectItem>
                 <SelectItem value="critical">Critical</SelectItem>
                 <SelectItem value="risk">Risk</SelectItem>
+                <SelectItem value="risk_critical">Risk + Critical</SelectItem>
                 <SelectItem value="warn">Warning</SelectItem>
                 <SelectItem value="info">Info</SelectItem>
               </SelectContent>

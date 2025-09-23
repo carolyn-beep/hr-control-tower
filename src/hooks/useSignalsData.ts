@@ -16,11 +16,12 @@ interface UseSignalsDataProps {
   levelFilter?: string;
   startDate?: string;
   endDate?: string;
+  multipleLevels?: string[];
 }
 
-export const useSignalsData = ({ levelFilter, startDate, endDate }: UseSignalsDataProps = {}) => {
+export const useSignalsData = ({ levelFilter, startDate, endDate, multipleLevels }: UseSignalsDataProps = {}) => {
   return useQuery({
-    queryKey: ['signals', levelFilter, startDate, endDate],
+    queryKey: ['signals', levelFilter, startDate, endDate, multipleLevels],
     queryFn: async (): Promise<SignalData[]> => {
       let query = supabase
         .from('signal')
@@ -38,7 +39,9 @@ export const useSignalsData = ({ levelFilter, startDate, endDate }: UseSignalsDa
         .order('ts', { ascending: false });
 
       // Apply level filter
-      if (levelFilter && levelFilter !== 'all') {
+      if (multipleLevels && multipleLevels.length > 0) {
+        query = query.in('level', multipleLevels);
+      } else if (levelFilter && levelFilter !== 'all') {
         query = query.eq('level', levelFilter);
       }
 
