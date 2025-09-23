@@ -744,7 +744,7 @@ const SignalActionButton = ({
   const recognizeAndCloseLoop = useRecognizeAndCloseLoop();
   
   if (signal.level === 'critical' || signal.level === 'risk') {
-    // Release evaluation button - disable only if tenure_ok=false OR data_ok=false
+    // Release evaluation button - disable only if tenure < 21 days OR evidence < 3 in last 14 days
     const canRelease = safeguards?.tenure_ok && safeguards?.data_ok;
     
     if (!canRelease) {
@@ -763,7 +763,7 @@ const SignalActionButton = ({
           </TooltipTrigger>
           <TooltipContent>
             <div className="text-xs">
-              Needs 21d tenure and 14d evidence.
+              Needs 21+ days tenure and 3+ evidence points in last 14 days.
             </div>
           </TooltipContent>
         </Tooltip>
