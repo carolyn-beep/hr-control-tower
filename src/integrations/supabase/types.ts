@@ -250,6 +250,36 @@ export type Database = {
           },
         ]
       }
+      user_profiles: {
+        Row: {
+          created_at: string | null
+          department: string | null
+          email: string
+          full_name: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          department?: string | null
+          email: string
+          full_name?: string | null
+          id: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          department?: string | null
+          email?: string
+          full_name?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       v_release_open: {
@@ -307,6 +337,14 @@ export type Database = {
           risk_score: number
         }[]
       }
+      get_user_role: {
+        Args: { user_id?: string }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
+      has_role_access: {
+        Args: { required_roles: Database["public"]["Enums"]["app_role"][] }
+        Returns: boolean
+      }
       insert_release_case: {
         Args:
           | {
@@ -339,7 +377,7 @@ export type Database = {
       }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "hr_manager" | "manager" | "employee"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -466,6 +504,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "hr_manager", "manager", "employee"],
+    },
   },
 } as const
