@@ -327,9 +327,12 @@ export const ReleaseEvaluationModal = ({ open, onOpenChange, personId, personNam
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto" aria-describedby="release-evaluation-description">
         <DialogHeader>
           <DialogTitle>Release Evaluation - {personName}</DialogTitle>
+          <div id="release-evaluation-description" className="sr-only">
+            AI-powered evaluation for release decision based on performance evidence and coaching history
+          </div>
         </DialogHeader>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
