@@ -254,6 +254,7 @@ export type Database = {
           created_at: string
           id: string
           level: string
+          meta: Json | null
           person_id: string
           reason: string
           score_delta: number | null
@@ -263,6 +264,7 @@ export type Database = {
           created_at?: string
           id?: string
           level: string
+          meta?: Json | null
           person_id: string
           reason: string
           score_delta?: number | null
@@ -272,6 +274,7 @@ export type Database = {
           created_at?: string
           id?: string
           level?: string
+          meta?: Json | null
           person_id?: string
           reason?: string
           score_delta?: number | null
