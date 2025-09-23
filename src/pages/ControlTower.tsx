@@ -15,12 +15,14 @@ import {
   CheckCircle,
   XCircle,
   UserCheck,
-  Play
+  Play,
+  RefreshCw
 } from "lucide-react";
 import heroImage from "@/assets/hr-hero.jpg";
 import { useDashboardMetrics } from "@/hooks/useDashboardMetrics";
 import { useRecentSignalsWithPerson } from "@/hooks/useRecentSignalsWithPerson";
 import { useRiskTrend } from "@/hooks/useRiskTrend";
+import { useRefreshDemoData } from "@/hooks/useRefreshDemoData";
 import { ReleaseEvaluationModal } from "@/components/ReleaseEvaluationModal";
 import { AutoCoachModal } from "@/components/AutoCoachModal";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -106,6 +108,7 @@ const ControlTower = () => {
   const { data: riskTrend, isLoading: riskTrendLoading } = useRiskTrend();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const refreshDemoData = useRefreshDemoData();
   const [selectedPersonId, setSelectedPersonId] = useState<string>('');
   const [selectedPersonName, setSelectedPersonName] = useState<string>('');
   const [selectedSignalId, setSelectedSignalId] = useState<string>('');
@@ -296,6 +299,19 @@ const ControlTower = () => {
                   <Button variant="outline" className="w-full justify-start hover:bg-primary/5 group h-10">
                     <TrendingUp className="mr-2 h-4 w-4 group-hover:scale-110 transition-transform" />
                     <span className="font-medium">Generate Report</span>
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start hover:bg-primary/5 group h-10"
+                    onClick={() => refreshDemoData.mutate()}
+                    disabled={refreshDemoData.isPending}
+                  >
+                    <RefreshCw className={`mr-2 h-4 w-4 group-hover:scale-110 transition-transform ${
+                      refreshDemoData.isPending ? 'animate-spin' : ''
+                    }`} />
+                    <span className="font-medium">
+                      {refreshDemoData.isPending ? 'Refreshing...' : 'Refresh Demo Data'}
+                    </span>
                   </Button>
                 </CardContent>
               </Card>
