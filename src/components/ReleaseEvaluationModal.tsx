@@ -214,10 +214,11 @@ export const ReleaseEvaluationModal = ({ open, onOpenChange, personId, personNam
       }));
 
       const { data, error } = await supabase.rpc('insert_release_case', {
-        target_person_id: personId,
-        decision_reason: aiResult.rationale.join('; '),
-        calculated_risk_score: personProfile.risk_score,
-        evidence_data: evidenceData
+        person_id: personId,
+        reason: aiResult.rationale.join('; '),
+        evidence_json: evidenceData,
+        risk_score: personProfile.risk_score,
+        decision: aiResult.decision
       });
 
       if (error) throw error;

@@ -308,12 +308,20 @@ export type Database = {
         }[]
       }
       insert_release_case: {
-        Args: {
-          calculated_risk_score: number
-          decision_reason: string
-          evidence_data: Json
-          target_person_id: string
-        }
+        Args:
+          | {
+              calculated_risk_score: number
+              decision_reason: string
+              evidence_data: Json
+              target_person_id: string
+            }
+          | {
+              decision: string
+              evidence_json: Json
+              person_id: string
+              reason: string
+              risk_score: number
+            }
         Returns: string
       }
       release_safeguards: {
