@@ -413,7 +413,8 @@ const ControlTower = () => {
                   <CardTitle className="text-lg font-semibold text-foreground">Recent Signals</CardTitle>
                   <Button 
                     variant="outline" 
-                    className="hover:bg-primary/5"
+                    size="sm"
+                    className="hover:bg-primary/5 shadow-soft hover:shadow-dashboard transition-all duration-200 hover:scale-105"
                     onClick={() => navigate('/signals?level=risk,critical&sort=ts_desc')}
                   >
                     View All Signals
@@ -449,11 +450,11 @@ const ControlTower = () => {
 
                       const getBadgeColor = (level: string) => {
                         switch (level.toLowerCase()) {
-                          case 'critical': return 'text-destructive border-destructive';
-                          case 'risk': return 'text-orange-600 border-orange-600';
-                          case 'warn': return 'text-yellow-600 border-yellow-600';
-                          case 'info': return 'text-muted-foreground border-muted-foreground';
-                          default: return 'text-muted-foreground border-muted-foreground';
+                          case 'critical': return 'text-destructive border-destructive bg-destructive/10';
+                          case 'risk': return 'text-warning border-warning bg-warning/10';
+                          case 'warn': return 'text-primary border-primary bg-primary/10';
+                          case 'info': return 'text-muted-foreground border-muted-foreground bg-muted/10';
+                          default: return 'text-muted-foreground border-muted-foreground bg-muted/10';
                         }
                       };
 
@@ -488,8 +489,9 @@ const ControlTower = () => {
                           </div>
                           
                           <Button 
-                            variant="outline" 
+                            variant={['risk', 'critical'].includes(signal.level.toLowerCase()) ? "gradient" : "outline"}
                             size="sm"
+                            className="shadow-soft hover:shadow-dashboard transition-all duration-200 hover:scale-105"
                             onClick={() => {
                               setSelectedPersonId(signal.person_id);
                               setSelectedPersonName(signal.person);
