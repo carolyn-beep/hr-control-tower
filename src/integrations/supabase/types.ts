@@ -76,6 +76,44 @@ export type Database = {
         }
         Relationships: []
       }
+      release_case: {
+        Row: {
+          evidence: Json
+          id: string
+          opened_at: string
+          person_id: string
+          reason: string
+          risk_score: number
+          status: string
+        }
+        Insert: {
+          evidence: Json
+          id?: string
+          opened_at?: string
+          person_id: string
+          reason: string
+          risk_score: number
+          status?: string
+        }
+        Update: {
+          evidence?: Json
+          id?: string
+          opened_at?: string
+          person_id?: string
+          reason?: string
+          risk_score?: number
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "release_case_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "person"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       risk_score: {
         Row: {
           calculated_at: string
