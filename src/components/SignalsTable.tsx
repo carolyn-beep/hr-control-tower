@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Filter, Loader2, UserCheck } from "lucide-react";
+import { CalendarIcon, Filter, Loader2, UserCheck, AlertTriangle, Activity } from "lucide-react";
 import { useSignalsData } from "@/hooks/useSignalsData";
 import { ReleaseEvaluationModal } from "@/components/ReleaseEvaluationModal";
 import { useSearchParams } from "react-router-dom";
@@ -171,13 +171,32 @@ const SignalsTable = () => {
         </CardHeader>
         <CardContent>
           {isLoading ? (
-            <div className="flex items-center justify-center py-8">
-              <Loader2 className="h-8 w-8 animate-spin" />
-              <span className="ml-2">Loading signals...</span>
+            <div className="flex flex-col items-center justify-center py-12 space-y-4">
+              <div className="relative">
+                <div className="w-12 h-12 border-4 border-primary/20 rounded-full animate-spin"></div>
+                <div className="absolute top-0 left-0 w-12 h-12 border-t-4 border-primary rounded-full animate-spin"></div>
+              </div>
+              <div className="text-center space-y-2">
+                <p className="text-lg font-medium text-foreground animate-pulse">Loading signals...</p>
+                <p className="text-sm text-muted-foreground">Analyzing risk patterns</p>
+              </div>
             </div>
           ) : error ? (
-            <div className="text-center py-8 text-destructive">
-              Failed to load signals. Please try again.
+            <div className="flex flex-col items-center justify-center py-12 space-y-4 animate-fade-in">
+              <div className="p-4 bg-destructive/10 rounded-full">
+                <AlertTriangle className="h-8 w-8 text-destructive" />
+              </div>
+              <div className="text-center space-y-2">
+                <p className="text-lg font-semibold text-destructive">Failed to load signals</p>
+                <p className="text-sm text-muted-foreground">Please check your connection and try again</p>
+                <Button 
+                  variant="outline" 
+                  onClick={() => window.location.reload()} 
+                  className="mt-4 hover:bg-destructive/10"
+                >
+                  Try Again
+                </Button>
+              </div>
             </div>
           ) : signals && signals.length > 0 ? (
             <Table>
@@ -192,8 +211,12 @@ const SignalsTable = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {signals.map((signal) => (
-                  <TableRow key={signal.id}>
+                  {signals.map((signal, index) => (
+                    <TableRow 
+                      key={signal.id} 
+                      className="hover:bg-accent/50 transition-colors duration-200 animate-fade-in hover-lift"
+                      style={{ animationDelay: `${index * 50}ms` }}
+                    >
                     <TableCell className="font-mono text-sm">
                       {format(new Date(signal.ts), "MMM dd, yyyy HH:mm")}
                     </TableCell>
@@ -227,8 +250,9 @@ const SignalsTable = () => {
                     </TableCell>
                     <TableCell className="text-right">
                       <Button 
-                        variant="outline" 
+                        variant="gradient" 
                         size="sm"
+                        className="shadow-soft hover:shadow-dashboard"
                         onClick={() => {
                           setSelectedPersonId(signal.person_id);
                           setSelectedPersonName(signal.person);
@@ -244,8 +268,30 @@ const SignalsTable = () => {
               </TableBody>
             </Table>
           ) : (
-            <div className="text-center py-8 text-muted-foreground">
-              No signals found matching the current filters.
+            <div className="flex flex-col items-center justify-center py-16 space-y-4 animate-fade-in">
+              <div className="relative">
+                <div className="p-4 bg-accent rounded-full">
+                  <Activity className="h-12 w-12 text-muted-foreground" />
+                </div>
+                <div className="absolute -top-1 -right-1 w-6 h-6 bg-primary/20 rounded-full animate-ping"></div>
+              </div>
+              <div className="text-center space-y-2 max-w-md">
+                <h3 className="text-lg font-semibold text-foreground">No signals detected</h3>
+                <p className="text-sm text-muted-foreground">
+                  Your AI monitoring system is running smoothly. No risk signals match the current filters.
+                </p>
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setLevelFilter('all');
+                    setStartDate(undefined);
+                    setEndDate(undefined);
+                  }}
+                  className="mt-4 hover:bg-primary/5"
+                >
+                  Clear All Filters
+                </Button>
+              </div>
             </div>
           )}
         </CardContent>

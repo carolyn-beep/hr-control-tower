@@ -206,50 +206,68 @@ const People = () => {
 
             {/* People Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {people.map((person) => (
-                <Card key={person.id} className="bg-gradient-card border-border shadow-card hover:shadow-dashboard transition-all duration-300">
+              {people.map((person, index) => (
+                <Card 
+                  key={person.id} 
+                  className={`bg-gradient-card border-border shadow-card hover:shadow-glow transition-all duration-500 hover-lift interactive-card animate-slide-up`}
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center space-x-3">
-                        <Avatar className="h-12 w-12">
-                          <AvatarImage src={person.avatar} alt={person.name} />
-                          <AvatarFallback className="bg-primary text-primary-foreground">
-                            {person.name.split(' ').map(n => n[0]).join('')}
-                          </AvatarFallback>
-                        </Avatar>
+                        <div className="relative">
+                          <Avatar className="h-14 w-14 ring-2 ring-border hover:ring-primary/50 transition-all duration-300">
+                            <AvatarImage src={person.avatar} alt={person.name} />
+                            <AvatarFallback className="bg-gradient-primary text-primary-foreground font-semibold">
+                              {person.name.split(' ').map(n => n[0]).join('')}
+                            </AvatarFallback>
+                          </Avatar>
+                          {/* Status indicator */}
+                          <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-card ${
+                            person.status === 'Critical' ? 'bg-destructive animate-pulse' :
+                            person.status === 'At Risk' ? 'bg-warning animate-pulse' :
+                            person.status === 'Monitoring' ? 'bg-primary animate-pulse' :
+                            person.status === 'Thriving' ? 'bg-success' :
+                            'bg-muted-foreground'
+                          }`}></div>
+                        </div>
                         <div>
-                          <h3 className="font-semibold text-foreground">{person.name}</h3>
-                          <p className="text-sm text-muted-foreground">{person.role}</p>
-                          <p className="text-xs text-muted-foreground">{person.department}</p>
+                          <h3 className="font-semibold text-foreground text-base hover:text-primary transition-colors cursor-pointer">
+                            {person.name}
+                          </h3>
+                          <p className="text-sm text-muted-foreground font-medium">{person.role}</p>
+                          <p className="text-xs text-muted-foreground bg-accent px-2 py-1 rounded-full mt-1 inline-block">
+                            {person.department}
+                          </p>
                         </div>
                       </div>
                       
                       <div className="text-right">
-                        <div className="flex items-center space-x-1 mb-1">
-                          <span className="text-xs text-muted-foreground">Risk:</span>
-                          <span className={`text-sm font-bold ${
-                            person.riskScore >= 80 ? 'text-destructive' :
-                            person.riskScore >= 60 ? 'text-warning' :
-                            person.riskScore >= 40 ? 'text-primary' :
-                            'text-success'
-                          }`}>
+                        <div className="flex items-center space-x-2 mb-2">
+                          <span className="text-xs text-muted-foreground">Risk Score</span>
+                          <div className={`px-3 py-1 rounded-full text-sm font-bold ${
+                            person.riskScore >= 80 ? 'bg-destructive/10 text-destructive' :
+                            person.riskScore >= 60 ? 'bg-warning/10 text-warning' :
+                            person.riskScore >= 40 ? 'bg-primary/10 text-primary' :
+                            'bg-success/10 text-success'
+                          } animate-bounce-in`}>
                             {person.riskScore}
-                          </span>
+                          </div>
                           {person.trend === 'up' ? (
-                            <TrendingUp className="h-3 w-3 text-success" />
+                            <TrendingUp className="h-4 w-4 text-success animate-bounce" />
                           ) : person.trend === 'down' ? (
-                            <TrendingDown className="h-3 w-3 text-destructive" />
+                            <TrendingDown className="h-4 w-4 text-destructive animate-bounce" />
                           ) : null}
                         </div>
                         <Badge 
                           variant="outline"
-                          className={`text-xs ${
-                            person.status === 'Critical' ? 'border-destructive text-destructive' :
-                            person.status === 'At Risk' ? 'border-warning text-warning' :
-                            person.status === 'Monitoring' ? 'border-primary text-primary' :
-                            person.status === 'Thriving' ? 'border-success text-success' :
-                            'border-muted-foreground text-muted-foreground'
-                          }`}
+                          className={`text-xs font-semibold px-3 py-1 ${
+                            person.status === 'Critical' ? 'border-destructive text-destructive bg-destructive/5' :
+                            person.status === 'At Risk' ? 'border-warning text-warning bg-warning/5' :
+                            person.status === 'Monitoring' ? 'border-primary text-primary bg-primary/5' :
+                            person.status === 'Thriving' ? 'border-success text-success bg-success/5' :
+                            'border-muted-foreground text-muted-foreground bg-muted/5'
+                          } animate-fade-in`}
                         >
                           {person.status}
                         </Badge>
@@ -305,13 +323,21 @@ const People = () => {
                     </div>
 
                     {/* Actions */}
-                    <div className="flex space-x-2 pt-2">
-                      <Button size="sm" variant="outline" className="flex-1">
+                    <div className="flex space-x-2 pt-3">
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="flex-1 hover:bg-primary/5 hover:border-primary/20 hover:scale-105 transition-all duration-200"
+                      >
                         <Activity className="h-3 w-3 mr-1" />
                         View Details
                       </Button>
                       {person.signals > 0 && (
-                        <Button size="sm" className="flex-1 bg-gradient-primary">
+                        <Button 
+                          size="sm" 
+                          variant="gradient"
+                          className="flex-1 shadow-glow hover:scale-105 transition-all duration-200"
+                        >
                           <Bot className="h-3 w-3 mr-1" />
                           Coach
                         </Button>

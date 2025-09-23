@@ -165,25 +165,47 @@ const ControlTower = () => {
           
           <main className="p-6 max-w-7xl mx-auto space-y-6">
             {/* Hero Section */}
-            <div className="relative overflow-hidden rounded-xl shadow-lg">
+            <div className="relative overflow-hidden rounded-xl shadow-dashboard animate-fade-in">
               <div 
-                className="h-48 bg-gradient-hero rounded-xl flex items-center justify-between px-8"
+                className="h-56 bg-gradient-hero rounded-xl flex items-center justify-between px-8 relative"
                 style={{ 
-                  backgroundImage: `linear-gradient(135deg, hsla(241, 79%, 52%, 0.9), hsla(260, 85%, 60%, 0.9)), url(${heroImage})`,
+                  backgroundImage: `linear-gradient(135deg, hsla(241, 79%, 52%, 0.95), hsla(260, 85%, 60%, 0.95)), url(${heroImage})`,
                   backgroundSize: 'cover',
                   backgroundPosition: 'center'
                 }}
               >
-                <div className="text-primary-foreground">
-                  <h1 className="text-3xl font-bold mb-2">Managerless HR Control Tower</h1>
-                  <p className="text-lg opacity-90">AI-powered risk detection and automated coaching without traditional management</p>
+                {/* Animated background elements */}
+                <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-transparent animate-pulse"></div>
+                <div className="absolute top-4 right-4 w-32 h-32 bg-primary/10 rounded-full blur-3xl animate-glow"></div>
+                <div className="absolute bottom-4 left-4 w-24 h-24 bg-primary-glow/20 rounded-full blur-2xl animate-pulse"></div>
+                
+                <div className="text-primary-foreground relative z-10 animate-slide-up">
+                  <h1 className="text-4xl font-bold mb-3">Managerless HR Control Tower</h1>
+                  <p className="text-lg opacity-90 mb-4">AI-powered risk detection and automated coaching without traditional management</p>
+                  <div className="flex items-center space-x-4 text-sm">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-3 h-3 bg-success rounded-full animate-pulse"></div>
+                      <span>All Systems Operational</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Bot className="h-4 w-4" />
+                      <span>AI Active</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex space-x-3">
-                  <Button variant="secondary" className="bg-white/20 text-white border-white/30 hover:bg-white/30">
+                
+                <div className="flex space-x-3 relative z-10 animate-bounce-in">
+                  <Button 
+                    variant="glass" 
+                    className="bg-white/20 text-white border-white/30 hover:bg-white/30 hover:scale-105 transition-all duration-300"
+                  >
                     <Activity className="mr-2 h-4 w-4" />
                     View Signals
                   </Button>
-                  <Button variant="secondary" className="bg-white/20 text-white border-white/30 hover:bg-white/30">
+                  <Button 
+                    variant="glass" 
+                    className="bg-white/20 text-white border-white/30 hover:bg-white/30 hover:scale-105 transition-all duration-300"
+                  >
                     <Bot className="mr-2 h-4 w-4" />
                     AI Insights
                   </Button>
@@ -194,23 +216,29 @@ const ControlTower = () => {
             {/* Risk Metrics */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {riskMetrics.map((metric, index) => (
-                <Card key={index} className="relative bg-gradient-card border-border shadow-card hover:shadow-dashboard transition-all duration-300 group">
+                <Card 
+                  key={index} 
+                  className={`relative bg-gradient-card border-border shadow-card hover:shadow-dashboard transition-all duration-500 group hover-lift animate-slide-up cursor-pointer`}
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium text-muted-foreground">
                       {metric.title}
                     </CardTitle>
-                    <div className={`p-2 rounded-lg ${metric.bgColor} group-hover:scale-110 transition-transform duration-200`}>
-                      <metric.icon className={`h-4 w-4 ${metric.color}`} />
+                    <div className={`p-3 rounded-xl ${metric.bgColor} group-hover:scale-110 transition-all duration-300 shadow-soft`}>
+                      <metric.icon className={`h-5 w-5 ${metric.color}`} />
                     </div>
                   </CardHeader>
                   <CardContent className="pt-0">
-                    <div className="text-2xl font-bold text-foreground mb-1">{metric.value}</div>
+                    <div className="text-3xl font-bold text-foreground mb-2 group-hover:scale-105 transition-transform duration-300">
+                      {metric.value}
+                    </div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
                         {metric.trend === "up" ? (
-                          <TrendingUp className="h-3 w-3 text-success mr-1" />
+                          <TrendingUp className="h-4 w-4 text-success mr-2 animate-bounce" />
                         ) : (
-                          <TrendingUp className="h-3 w-3 text-success mr-1 rotate-180" />
+                          <TrendingUp className="h-4 w-4 text-success mr-2 rotate-180 animate-bounce" />
                         )}
                         <span 
                           className={`text-sm font-medium ${
@@ -220,11 +248,15 @@ const ControlTower = () => {
                           {metric.change}
                         </span>
                       </div>
-                      <span className="text-xs text-muted-foreground">today</span>
+                      <span className="text-xs text-muted-foreground bg-accent px-2 py-1 rounded-full">today</span>
                     </div>
                   </CardContent>
-                  {/* Subtle hover gradient */}
-                  <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+                  
+                  {/* Animated border glow on hover */}
+                  <div className="absolute inset-0 rounded-xl bg-gradient-primary opacity-0 group-hover:opacity-10 transition-opacity duration-300 pointer-events-none" />
+                  
+                  {/* Interactive shine effect */}
+                  <div className="absolute inset-0 rounded-xl bg-gradient-to-r from-transparent via-white/5 to-transparent -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 pointer-events-none" />
                 </Card>
               ))}
             </div>
