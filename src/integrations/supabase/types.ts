@@ -157,6 +157,7 @@ export type Database = {
           reason: string
           risk_score: number
           status: string
+          updated_at: string | null
         }
         Insert: {
           evidence: Json
@@ -166,6 +167,7 @@ export type Database = {
           reason: string
           risk_score: number
           status?: string
+          updated_at?: string | null
         }
         Update: {
           evidence?: Json
@@ -175,6 +177,7 @@ export type Database = {
           reason?: string
           risk_score?: number
           status?: string
+          updated_at?: string | null
         }
         Relationships: [
           {
@@ -278,6 +281,10 @@ export type Database = {
           time_window: string
           value: number
         }[]
+      }
+      update_release_case_status: {
+        Args: { new_status: string; target_release_case_id: string }
+        Returns: number
       }
     }
     Enums: {
