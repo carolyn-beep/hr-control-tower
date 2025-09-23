@@ -116,6 +116,13 @@ const Workflows = () => {
   const [selectedPersonName, setSelectedPersonName] = useState<string>("");
   const [evidenceModalOpen, setEvidenceModalOpen] = useState(false);
 
+  const handleViewWorkflowDetails = (workflow: any) => {
+    toast({
+      title: `${workflow.name} - Detailed Analytics`,
+      description: `Success Rate: ${workflow.success_rate}% | Triggers: ${workflow.triggers} | Resolution: ${workflow.metrics.avg_resolution_time} | Current Status: ${workflow.status}`,
+    });
+  };
+
   const handleViewEvidence = async (releaseId: string, personName: string) => {
     try {
       const { data, error } = await supabase
@@ -416,7 +423,11 @@ const Workflows = () => {
                             </div>
                           </div>
 
-                          <Button className="w-full mt-4" variant="outline">
+                          <Button 
+                            className="w-full mt-4" 
+                            variant="outline"
+                            onClick={() => handleViewWorkflowDetails(workflow)}
+                          >
                             <AlertTriangle className="h-4 w-4 mr-2" />
                             View Details
                           </Button>
