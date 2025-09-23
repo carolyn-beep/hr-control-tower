@@ -1,0 +1,69 @@
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+
+export interface SignalData {
+  id: string;
+  ts: string;
+  person: string;
+  email: string;
+  level: string;
+  reason: string;
+  score_delta: number | null;
+}
+
+interface UseSignalsDataProps {
+  levelFilter?: string;
+  startDate?: string;
+  endDate?: string;
+}
+
+export const useSignalsData = ({ levelFilter, startDate, endDate }: UseSignalsDataProps = {}) => {
+  return useQuery({
+    queryKey: ['signals', levelFilter, startDate, endDate],
+    queryFn: async (): Promise<SignalData[]> => {
+      let query = supabase
+        .from('signal')
+        .select(`
+          id,
+          ts,
+          level,
+          reason,
+          person!inner (
+            name,
+            email
+          )
+        `)
+        .order('ts', { ascending: false });
+
+      // Apply level filter
+      if (levelFilter && levelFilter !== 'all') {
+        query = query.eq('level', levelFilter);
+      }
+
+      // Apply date range filters
+      if (startDate) {
+        query = query.gte('ts', startDate);
+      }
+      if (endDate) {
+        query = query.lte('ts', endDate);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        throw error;
+      }
+
+      return (data || []).map(signal => ({
+        id: signal.id,
+        ts: signal.ts,
+        person: signal.person.name,
+        email: signal.person.email,
+        level: signal.level,
+        reason: signal.reason,
+        score_delta: null // Will be added once migration is approved
+      }));
+    },
+    refetchInterval: 30000, // Refresh every 30 seconds
+  });
+};
