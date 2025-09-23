@@ -3,9 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 
 const ManagerlessHeader = () => {
   const [searchFocused, setSearchFocused] = useState(false);
+  const navigate = useNavigate();
+  const { toast } = useToast();
 
   return (
     <header className="bg-gradient-subtle border-b border-border px-6 py-4 shadow-soft backdrop-blur-sm sticky top-0 z-50">
@@ -42,6 +46,8 @@ const ManagerlessHeader = () => {
             variant="ghost" 
             size="icon" 
             className="relative hover-lift hover:bg-warning/10"
+            onClick={() => navigate('/signals?level=critical,risk')}
+            aria-label="View high-priority alerts"
           >
             <AlertTriangle className="h-5 w-5 text-warning" />
             <Badge className="absolute -top-1 -right-1 w-5 h-5 text-xs bg-destructive text-destructive-foreground flex items-center justify-center p-0 animate-pulse">
@@ -53,6 +59,13 @@ const ManagerlessHeader = () => {
             variant="ghost" 
             size="icon" 
             className="relative hover-lift hover:bg-primary/10"
+            onClick={() =>
+              toast({
+                title: 'Notifications',
+                description: 'You have 8 unread items. Inbox coming soon.',
+              })
+            }
+            aria-label="Open notifications"
           >
             <Bell className="h-5 w-5 transition-transform duration-200 hover:scale-110" />
             <Badge className="absolute -top-1 -right-1 w-5 h-5 text-xs bg-primary text-primary-foreground flex items-center justify-center p-0 animate-bounce-in">
@@ -64,6 +77,8 @@ const ManagerlessHeader = () => {
             variant="ghost" 
             size="icon" 
             className="hover-lift transition-all duration-200 hover:bg-accent hover:rotate-90"
+            onClick={() => toast({ title: 'Settings', description: 'Settings panel coming soon.' })}
+            aria-label="Open settings"
           >
             <Settings className="h-5 w-5" />
           </Button>
@@ -72,6 +87,8 @@ const ManagerlessHeader = () => {
             variant="glass" 
             size="icon" 
             className="hover-lift shadow-soft hover:shadow-dashboard"
+            onClick={() => navigate('/people')}
+            aria-label="Open profile"
           >
             <User className="h-5 w-5" />
           </Button>
