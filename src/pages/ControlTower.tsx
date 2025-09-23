@@ -147,11 +147,11 @@ const ControlTower = () => {
         <div className="flex-1">
           <ManagerlessHeader />
           
-          <main className="p-8 space-y-8">
+          <main className="p-6 max-w-7xl mx-auto space-y-6">
             {/* Hero Section */}
             <div className="relative overflow-hidden rounded-xl shadow-lg">
               <div 
-                className="h-56 bg-gradient-hero rounded-xl flex items-center justify-between px-10"
+                className="h-48 bg-gradient-hero rounded-xl flex items-center justify-between px-8"
                 style={{ 
                   backgroundImage: `linear-gradient(135deg, hsla(241, 79%, 52%, 0.9), hsla(260, 85%, 60%, 0.9)), url(${heroImage})`,
                   backgroundSize: 'cover',
@@ -159,16 +159,16 @@ const ControlTower = () => {
                 }}
               >
                 <div className="text-primary-foreground">
-                  <h1 className="text-4xl font-bold mb-3">Managerless HR Control Tower</h1>
-                  <p className="text-xl opacity-90">AI-powered risk detection and automated coaching without traditional management</p>
+                  <h1 className="text-3xl font-bold mb-2">Managerless HR Control Tower</h1>
+                  <p className="text-lg opacity-90">AI-powered risk detection and automated coaching without traditional management</p>
                 </div>
-                <div className="flex space-x-4">
-                  <Button variant="secondary" className="bg-white/20 text-white border-white/30 hover:bg-white/30 px-6 py-3">
-                    <Activity className="mr-2 h-5 w-5" />
+                <div className="flex space-x-3">
+                  <Button variant="secondary" className="bg-white/20 text-white border-white/30 hover:bg-white/30">
+                    <Activity className="mr-2 h-4 w-4" />
                     View Signals
                   </Button>
-                  <Button variant="secondary" className="bg-white/20 text-white border-white/30 hover:bg-white/30 px-6 py-3">
-                    <Bot className="mr-2 h-5 w-5" />
+                  <Button variant="secondary" className="bg-white/20 text-white border-white/30 hover:bg-white/30">
+                    <Bot className="mr-2 h-4 w-4" />
                     AI Insights
                   </Button>
                 </div>
@@ -176,25 +176,25 @@ const ControlTower = () => {
             </div>
 
             {/* Risk Metrics */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               {riskMetrics.map((metric, index) => (
                 <Card key={index} className="relative bg-gradient-card border-border shadow-card hover:shadow-dashboard transition-all duration-300 group">
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium text-muted-foreground">
                       {metric.title}
                     </CardTitle>
-                    <div className={`p-2.5 rounded-lg ${metric.bgColor} group-hover:scale-110 transition-transform duration-200`}>
-                      <metric.icon className={`h-5 w-5 ${metric.color}`} />
+                    <div className={`p-2 rounded-lg ${metric.bgColor} group-hover:scale-110 transition-transform duration-200`}>
+                      <metric.icon className={`h-4 w-4 ${metric.color}`} />
                     </div>
                   </CardHeader>
-                  <CardContent>
-                    <div className="text-3xl font-bold text-foreground mb-2">{metric.value}</div>
+                  <CardContent className="pt-0">
+                    <div className="text-2xl font-bold text-foreground mb-1">{metric.value}</div>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
                         {metric.trend === "up" ? (
-                          <TrendingUp className="h-4 w-4 text-success mr-1" />
+                          <TrendingUp className="h-3 w-3 text-success mr-1" />
                         ) : (
-                          <TrendingUp className="h-4 w-4 text-success mr-1 rotate-180" />
+                          <TrendingUp className="h-3 w-3 text-success mr-1 rotate-180" />
                         )}
                         <span 
                           className={`text-sm font-medium ${
@@ -214,30 +214,30 @@ const ControlTower = () => {
             </div>
 
             {/* Main Content Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Quick Actions */}
               <Card className="bg-gradient-card border-border shadow-card">
-                <CardHeader>
+                <CardHeader className="pb-3">
                   <CardTitle className="text-lg font-semibold text-foreground flex items-center">
-                    <Activity className="mr-2 h-5 w-5 text-primary" />
+                    <Activity className="mr-2 h-4 w-4 text-primary" />
                     Quick Actions
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
-                  <Button className="w-full justify-start bg-gradient-primary text-primary-foreground hover:opacity-90 group">
-                    <AlertTriangle className="mr-3 h-4 w-4 group-hover:scale-110 transition-transform" />
+                <CardContent className="space-y-2">
+                  <Button className="w-full justify-start bg-gradient-primary text-primary-foreground hover:opacity-90 group h-10">
+                    <AlertTriangle className="mr-2 h-4 w-4 group-hover:scale-110 transition-transform" />
                     <span className="font-medium">Review High Signals</span>
                   </Button>
-                  <Button variant="outline" className="w-full justify-start hover:bg-primary/5 group">
-                    <Bot className="mr-3 h-4 w-4 group-hover:scale-110 transition-transform" />
+                  <Button variant="outline" className="w-full justify-start hover:bg-primary/5 group h-10">
+                    <Bot className="mr-2 h-4 w-4 group-hover:scale-110 transition-transform" />
                     <span className="font-medium">Launch Auto-Coach</span>
                   </Button>
-                  <Button variant="outline" className="w-full justify-start hover:bg-primary/5 group">
-                    <Activity className="mr-3 h-4 w-4 group-hover:scale-110 transition-transform" />
+                  <Button variant="outline" className="w-full justify-start hover:bg-primary/5 group h-10">
+                    <Activity className="mr-2 h-4 w-4 group-hover:scale-110 transition-transform" />
                     <span className="font-medium">Analyze Trends</span>
                   </Button>
-                  <Button variant="outline" className="w-full justify-start hover:bg-primary/5 group">
-                    <TrendingUp className="mr-3 h-4 w-4 group-hover:scale-110 transition-transform" />
+                  <Button variant="outline" className="w-full justify-start hover:bg-primary/5 group h-10">
+                    <TrendingUp className="mr-2 h-4 w-4 group-hover:scale-110 transition-transform" />
                     <span className="font-medium">Generate Report</span>
                   </Button>
                 </CardContent>
@@ -245,9 +245,9 @@ const ControlTower = () => {
 
               {/* AI Automation Status */}
               <Card className="lg:col-span-2 bg-gradient-card border-border shadow-card">
-                <CardHeader>
+                <CardHeader className="pb-3">
                   <CardTitle className="text-lg font-semibold text-foreground flex items-center">
-                    <Bot className="mr-2 h-5 w-5 text-primary" />
+                    <Bot className="mr-2 h-4 w-4 text-primary" />
                     AI Automation Status
                   </CardTitle>
                 </CardHeader>
@@ -259,8 +259,8 @@ const ControlTower = () => {
                       { system: "Performance Analyzer", status: "Training", processes: "Learning new patterns", type: "warning", icon: Activity },
                       { system: "Workflow Automation", status: "Active", processes: "23 workflows triggered", type: "success", icon: CheckCircle }
                     ].map((automation, index) => (
-                      <div key={index} className="flex items-center justify-between p-4 bg-accent/50 rounded-lg hover:bg-accent transition-colors group">
-                        <div className="flex items-center space-x-4">
+                      <div key={index} className="flex items-center justify-between p-3 bg-accent/50 rounded-lg hover:bg-accent transition-colors">
+                        <div className="flex items-center space-x-3">
                           <div className={`p-2 rounded-lg ${
                             automation.type === 'success' ? 'bg-success/10' : 
                             automation.type === 'warning' ? 'bg-warning/10' : 'bg-primary/10'
@@ -282,7 +282,7 @@ const ControlTower = () => {
                           }`}></div>
                           <Badge 
                             variant={automation.status === 'Active' ? 'default' : 'secondary'}
-                            className={`${
+                            className={`text-xs ${
                               automation.type === 'success' ? 'bg-success/10 text-success border-success/20' :
                               automation.type === 'warning' ? 'bg-warning/10 text-warning border-warning/20' : ''
                             }`}
@@ -299,25 +299,25 @@ const ControlTower = () => {
 
             {/* Recent Signals */}
             <Card className="bg-gradient-card border-border shadow-card">
-              <CardHeader className="pb-6">
+              <CardHeader className="pb-4">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-2xl font-bold text-foreground">Recent Signals</CardTitle>
-                  <Button variant="outline" className="hover:bg-primary/5 px-6">View All Signals</Button>
+                  <CardTitle className="text-lg font-semibold text-foreground">Recent Signals</CardTitle>
+                  <Button variant="outline" className="hover:bg-primary/5">View All Signals</Button>
                 </div>
               </CardHeader>
-              <CardContent className="px-6 pb-6">
-                <div className="space-y-4">
+              <CardContent>
+                <div className="space-y-3">
                   {signalsLoading ? (
-                    <div className="text-center py-12 text-muted-foreground">
-                      <div className="animate-pulse flex flex-col items-center space-y-3">
-                        <div className="w-8 h-8 bg-muted rounded-full"></div>
+                    <div className="text-center py-8 text-muted-foreground">
+                      <div className="animate-pulse flex flex-col items-center space-y-2">
+                        <div className="w-6 h-6 bg-muted rounded-full"></div>
                         <p>Loading signals...</p>
                       </div>
                     </div>
                   ) : !recentSignals || recentSignals.length === 0 ? (
-                    <div className="text-center py-12 text-muted-foreground">
-                      <AlertTriangle className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p className="text-lg">No recent signals</p>
+                    <div className="text-center py-8 text-muted-foreground">
+                      <AlertTriangle className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                      <p>No recent signals</p>
                       <p className="text-sm">All systems are running smoothly</p>
                     </div>
                   ) : (
