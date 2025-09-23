@@ -122,6 +122,8 @@ export type Database = {
           email: string | null
           id: string
           name: string
+          role: string | null
+          start_date: string | null
           updated_at: string
         }
         Insert: {
@@ -130,6 +132,8 @@ export type Database = {
           email?: string | null
           id?: string
           name: string
+          role?: string | null
+          start_date?: string | null
           updated_at?: string
         }
         Update: {
@@ -138,6 +142,8 @@ export type Database = {
           email?: string | null
           id?: string
           name?: string
+          role?: string | null
+          start_date?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -206,7 +212,7 @@ export type Database = {
           {
             foreignKeyName: "risk_score_person_id_fkey"
             columns: ["person_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "person"
             referencedColumns: ["id"]
           },
