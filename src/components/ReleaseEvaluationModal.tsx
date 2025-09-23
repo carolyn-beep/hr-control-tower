@@ -212,17 +212,10 @@ export const ReleaseEvaluationModal = ({ open, onOpenChange, personId, personNam
     
     setCreatingCase(true);
     try {
-      const evidenceData = JSON.parse(JSON.stringify({
-        person_profile: personProfile,
-        evidence_table: evidence,
-        coaching_history: coachingHistory,
-        ai_decision: aiResult
-      }));
-
       const { data, error } = await supabase.rpc('insert_release_case', {
         person_id: personId,
-        reason: aiResult.rationale.join('; '),
-        evidence_json: evidenceData,
+        reason: reason || 'Sustained PR shortfall',
+        evidence_json: JSON.parse(JSON.stringify(evidence)),
         risk_score: personProfile.risk_score,
         decision: aiResult.decision
       });
@@ -230,8 +223,8 @@ export const ReleaseEvaluationModal = ({ open, onOpenChange, personId, personNam
       if (error) throw error;
 
       toast({
-        title: "Success",
-        description: "Release case created successfully.",
+        title: "Release case created",
+        description: "The release case has been successfully created.",
       });
       
       onOpenChange(false);
