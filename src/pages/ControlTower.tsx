@@ -39,7 +39,9 @@ import { useReleaseSafeguards } from "@/hooks/useReleaseSafeguards";
 import { useRefreshDemoData } from "@/hooks/useRefreshDemoData";
 import { ReleaseEvaluationModal } from "@/components/ReleaseEvaluationModal";
 import { AutoCoachModal } from "@/components/AutoCoachModal";
+import { AdaCoachModal } from "@/components/AdaCoachModal";
 import { CoachingPlansModal } from "@/components/CoachingPlansModal";
+import { PersonSelectionModal } from "@/components/PersonSelectionModal";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as ChartTooltip, ResponsiveContainer } from 'recharts';
 import { useToast } from "@/hooks/use-toast";
 
@@ -131,7 +133,26 @@ const ControlTower = () => {
   const [selectedReason, setSelectedReason] = useState<string>('');
   const [modalOpen, setModalOpen] = useState(false);
   const [autoCoachModalOpen, setAutoCoachModalOpen] = useState(false);
+  const [adaCoachModalOpen, setAdaCoachModalOpen] = useState(false);
   const [coachingPlansModalOpen, setCoachingPlansModalOpen] = useState(false);
+  const [personSelectionModalOpen, setPersonSelectionModalOpen] = useState(false);
+
+  // Handle person selection from modal
+  const handlePersonSelect = (person: any, action: 'coach' | 'ada' | 'release') => {
+    setSelectedPersonId(person.id);
+    setSelectedPersonName(person.name);
+    setSelectedSignalId(''); // No specific signal when launching from Control Tower
+    setSelectedReason('');
+
+    // Open appropriate modal based on action
+    if (action === 'coach') {
+      setAutoCoachModalOpen(true);
+    } else if (action === 'ada') {
+      setAdaCoachModalOpen(true);
+    } else if (action === 'release') {
+      setModalOpen(true);
+    }
+  };
 
   // Create dynamic risk metrics based on real data
   const riskMetrics = [
@@ -357,12 +378,7 @@ const ControlTower = () => {
                   <Button 
                     variant="outline" 
                     className="w-full justify-start hover:bg-primary/5 group h-10"
-                    onClick={() => {
-                      toast({
-                        title: "Auto-Coach Feature",
-                        description: "AI coaching system will analyze performance patterns and suggest personalized coaching plans.",
-                      });
-                    }}
+                    onClick={() => setPersonSelectionModalOpen(true)}
                   >
                     <MessageCircle className="mr-2 h-4 w-4 group-hover:scale-110 transition-transform" />
                     <span className="font-medium">Launch Auto-Coach</span>
@@ -370,10 +386,10 @@ const ControlTower = () => {
                   <Button 
                     variant="outline" 
                     className="w-full justify-start hover:bg-primary/5 group h-10"
-                    onClick={() => setModalOpen(true)}
+                    onClick={() => navigate('/people')}
                   >
                     <LogOut className="mr-2 h-4 w-4 group-hover:scale-110 transition-transform" />
-                    <span className="font-medium">Evaluate for Release</span>
+                    <span className="font-medium">View All People</span>
                   </Button>
                   <Button 
                     variant="outline" 
@@ -727,19 +743,30 @@ const ControlTower = () => {
          reason={selectedReason}
        />
        
-        <AutoCoachModal
-          open={autoCoachModalOpen}
-          onOpenChange={setAutoCoachModalOpen}
-          personId={selectedPersonId}
-          personName={selectedPersonName}
-          signalId={selectedSignalId}
-          reason={selectedReason}
-        />
-        
-        <CoachingPlansModal
-          open={coachingPlansModalOpen}
-          onOpenChange={setCoachingPlansModalOpen}
-        />
+         <AutoCoachModal
+           open={autoCoachModalOpen}
+           onOpenChange={setAutoCoachModalOpen}
+           personId={selectedPersonId}
+           personName={selectedPersonName}
+         />
+         
+         <AdaCoachModal
+           open={adaCoachModalOpen}
+           onOpenChange={setAdaCoachModalOpen}
+           personId={selectedPersonId}
+           personName={selectedPersonName}
+         />
+         
+         <PersonSelectionModal
+           open={personSelectionModalOpen}
+           onOpenChange={setPersonSelectionModalOpen}
+           onPersonSelect={handlePersonSelect}
+         />
+         
+         <CoachingPlansModal
+           open={coachingPlansModalOpen}
+           onOpenChange={setCoachingPlansModalOpen}
+         />
      </div>
      </TooltipProvider>
    );
