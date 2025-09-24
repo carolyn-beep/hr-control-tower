@@ -1,0 +1,269 @@
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { supabase } from "@/integrations/supabase/client";
+import { Bot, Send, Lightbulb, MessageCircle, Loader2, Code, BookOpen, Zap } from "lucide-react";
+
+interface AdaModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+interface AdaResponse {
+  reply: string;
+  tips: string[];
+  error?: string;
+}
+
+export const StandaloneAdaModal = ({ open, onOpenChange }: AdaModalProps) => {
+  const [question, setQuestion] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [adaResponse, setAdaResponse] = useState<AdaResponse | null>(null);
+
+  const handleAskAda = async () => {
+    if (!question.trim()) return;
+
+    setLoading(true);
+    try {
+      // Call Ada without specific person context for general development help
+      const { data, error } = await supabase.functions.invoke('ada-coach', {
+        body: {
+          question: question.trim(),
+          devContext: {
+            type: 'general_learning',
+            timestamp: new Date().toISOString()
+          }
+        }
+      });
+
+      if (error) throw error;
+
+      setAdaResponse(data);
+    } catch (error) {
+      console.error('Error calling Ada:', error);
+      setAdaResponse({
+        reply: "I'm having trouble connecting right now. Please try again in a moment, or feel free to ask me about coding best practices, debugging techniques, or development workflows!",
+        tips: [
+          "Check your internet connection",
+          "Try rephrasing your question",
+          "Ask about specific programming concepts or debugging strategies"
+        ],
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSampleQuestion = (sample: string) => {
+    setQuestion(sample);
+  };
+
+  const handleClose = () => {
+    setQuestion("");
+    setAdaResponse(null);
+    onOpenChange(false);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="max-w-3xl max-h-[85vh] overflow-hidden flex flex-col">
+        <DialogHeader>
+          <DialogTitle className="flex items-center space-x-2">
+            <Bot className="h-5 w-5 text-primary" />
+            <span>Ask Ada - Your AI Development Assistant</span>
+          </DialogTitle>
+          <DialogDescription>
+            Get instant help with coding, debugging, best practices, and development workflows
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="flex-1 overflow-y-auto space-y-6">
+          {/* Question Input */}
+          <div className="space-y-3">
+            <label className="text-sm font-medium">What can Ada help you with?</label>
+            <div className="space-y-3">
+              <Textarea
+                value={question}
+                onChange={(e) => setQuestion(e.target.value)}
+                placeholder="Ask about coding best practices, debugging techniques, performance optimization, architecture decisions, or any development challenge..."
+                className="min-h-[100px] resize-none"
+                disabled={loading}
+              />
+              <Button 
+                onClick={handleAskAda}
+                disabled={!question.trim() || loading}
+                className="w-full"
+                size="lg"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Ada is thinking...
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-4 w-4 mr-2" />
+                    Ask Ada
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+
+          {/* Ada's Response */}
+          {adaResponse && (
+            <Card className="bg-gradient-card border-primary/20">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center space-x-2 text-lg">
+                  <MessageCircle className="h-5 w-5 text-primary" />
+                  <span>Ada's Response</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="bg-background/50 rounded-lg p-4">
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap">
+                    {adaResponse.reply}
+                  </p>
+                </div>
+
+                {adaResponse.tips && adaResponse.tips.length > 0 && (
+                  <div>
+                    <h4 className="flex items-center space-x-2 font-medium text-sm mb-2">
+                      <Lightbulb className="h-4 w-4 text-warning" />
+                      <span>Pro Tips</span>
+                    </h4>
+                    <ul className="space-y-1">
+                      {adaResponse.tips.map((tip, index) => (
+                        <li key={index} className="text-sm text-muted-foreground flex items-start space-x-2">
+                          <span className="text-primary mt-0.5">•</span>
+                          <span>{tip}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {adaResponse.error && (
+                  <div className="text-xs text-destructive bg-destructive/10 rounded p-2">
+                    Technical details: {adaResponse.error}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Sample Questions */}
+          {!adaResponse && !loading && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card className="bg-muted/50">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center space-x-2">
+                    <Code className="h-4 w-4" />
+                    <span>Coding & Debugging</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {[
+                      "How do I debug a React component that's not re-rendering?",
+                      "What are the best practices for error handling in async functions?",
+                      "How can I optimize the performance of this code snippet?"
+                    ].map((sample, index) => (
+                      <Button
+                        key={index}
+                        variant="ghost"
+                        size="sm"
+                        className="text-left justify-start h-auto py-2 px-3 text-xs w-full"
+                        onClick={() => handleSampleQuestion(sample)}
+                        disabled={loading}
+                      >
+                        {sample}
+                      </Button>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className="bg-muted/50">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center space-x-2">
+                    <BookOpen className="h-4 w-4" />
+                    <span>Architecture & Best Practices</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {[
+                      "What's the difference between useState and useReducer?",
+                      "How should I structure my React components for scalability?",
+                      "When should I use custom hooks vs regular functions?"
+                    ].map((sample, index) => (
+                      <Button
+                        key={index}
+                        variant="ghost"
+                        size="sm"
+                        className="text-left justify-start h-auto py-2 px-3 text-xs w-full"
+                        onClick={() => handleSampleQuestion(sample)}
+                        disabled={loading}
+                      >
+                        {sample}
+                      </Button>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {/* Ada Capabilities */}
+          {!adaResponse && !loading && (
+            <Card className="bg-primary/5 border-primary/20">
+              <CardContent className="pt-4">
+                <div className="flex items-start space-x-3">
+                  <Zap className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                  <div>
+                    <h4 className="font-medium text-sm mb-2">Ada can help you with:</h4>
+                    <ul className="text-sm text-muted-foreground space-y-1">
+                      <li>• Code review and optimization suggestions</li>
+                      <li>• Debugging complex issues and error patterns</li>
+                      <li>• Best practices for React, TypeScript, and web development</li>
+                      <li>• Architecture decisions and design patterns</li>
+                      <li>• Performance optimization techniques</li>
+                      <li>• Learning new technologies and frameworks</li>
+                    </ul>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        <div className="flex justify-end space-x-2 pt-4 border-t">
+          <Button variant="outline" onClick={handleClose}>
+            Close
+          </Button>
+          {adaResponse && (
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setAdaResponse(null);
+                setQuestion("");
+              }}
+            >
+              Ask Another Question
+            </Button>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};

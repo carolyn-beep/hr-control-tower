@@ -40,6 +40,7 @@ import { useRefreshDemoData } from "@/hooks/useRefreshDemoData";
 import { ReleaseEvaluationModal } from "@/components/ReleaseEvaluationModal";
 import { AutoCoachModal } from "@/components/AutoCoachModal";
 import { AdaCoachModal } from "@/components/AdaCoachModal";
+import { StandaloneAdaModal } from "@/components/StandaloneAdaModal";
 import { CoachingPlansModal } from "@/components/CoachingPlansModal";
 import { PersonSelectionModal } from "@/components/PersonSelectionModal";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as ChartTooltip, ResponsiveContainer } from 'recharts';
@@ -134,6 +135,7 @@ const ControlTower = () => {
   const [modalOpen, setModalOpen] = useState(false);
   const [autoCoachModalOpen, setAutoCoachModalOpen] = useState(false);
   const [adaCoachModalOpen, setAdaCoachModalOpen] = useState(false);
+  const [standaloneAdaModalOpen, setStandaloneAdaModalOpen] = useState(false);
   const [coachingPlansModalOpen, setCoachingPlansModalOpen] = useState(false);
   const [personSelectionModalOpen, setPersonSelectionModalOpen] = useState(false);
 
@@ -395,6 +397,14 @@ const ControlTower = () => {
                   >
                     <MessageCircle className="mr-2 h-4 w-4 group-hover:scale-110 transition-transform" />
                     <span className="font-medium">Launch Auto-Coach</span>
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start hover:bg-primary/5 group h-10"
+                    onClick={() => setStandaloneAdaModalOpen(true)}
+                  >
+                    <Bot className="mr-2 h-4 w-4 group-hover:scale-110 transition-transform" />
+                    <span className="font-medium">Ask Ada AI</span>
                   </Button>
                   <Button 
                     variant="outline" 
@@ -763,18 +773,23 @@ const ControlTower = () => {
            personName={selectedPersonName}
          />
          
-         <AdaCoachModal
-           open={adaCoachModalOpen}
-           onOpenChange={setAdaCoachModalOpen}
-           personId={selectedPersonId}
-           personName={selectedPersonName}
-         />
-         
-         <PersonSelectionModal
-           open={personSelectionModalOpen}
-           onOpenChange={setPersonSelectionModalOpen}
-           onPersonSelect={handlePersonSelect}
-         />
+          <AdaCoachModal
+            open={adaCoachModalOpen}
+            onOpenChange={setAdaCoachModalOpen}
+            personId={selectedPersonId}
+            personName={selectedPersonName}
+          />
+          
+          <StandaloneAdaModal
+            open={standaloneAdaModalOpen}
+            onOpenChange={setStandaloneAdaModalOpen}
+          />
+          
+          <PersonSelectionModal
+            open={personSelectionModalOpen}
+            onOpenChange={setPersonSelectionModalOpen}
+            onPersonSelect={handlePersonSelect}
+          />
          
          <CoachingPlansModal
            open={coachingPlansModalOpen}
