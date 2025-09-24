@@ -11,6 +11,8 @@ export interface RankedSignalData {
   reason: string;
   score_delta: number | null;
   action_type: 'release' | 'coach' | 'kudos' | 'none';
+  action_disabled?: boolean;
+  action_reason?: string;
 }
 
 interface UseRankedSignalsProps {
@@ -55,18 +57,45 @@ export const useRankedSignals = ({ levelFilter, startDate, endDate, multipleLeve
         throw error;
       }
 
-      // Transform signals to match SQL structure
-      const signals = (data || []).map(signal => ({
-        id: signal.id,
-        ts: signal.ts,
-        person_id: signal.person_id,
-        person: (signal.person as any).name,
-        email: (signal.person as any).email,
-        level: signal.level,
-        reason: signal.reason,
-        score_delta: signal.score_delta ?? 0,
-        action_type: getActionType(signal.level)
-      }));
+      // Transform signals to match SQL structure and check safeguards
+      const uniquePersonIds = [...new Set(data.map(signal => signal.person_id))];
+      
+      // Fetch safeguards for all unique persons in parallel
+      const safeguardsPromises = uniquePersonIds.map(async (personId) => {
+        try {
+          const { data: safeguardData } = await supabase.rpc('release_safeguards', {
+            target_person_id: personId
+          });
+          return { personId, safeguards: safeguardData?.[0] || null };
+        } catch (error) {
+          console.error(`Error fetching safeguards for person ${personId}:`, error);
+          return { personId, safeguards: null };
+        }
+      });
+
+      const safeguardsResults = await Promise.all(safeguardsPromises);
+      const safeguardsMap = new Map(
+        safeguardsResults.map(result => [result.personId, result.safeguards])
+      );
+
+      const signals = (data || []).map(signal => {
+        const safeguards = safeguardsMap.get(signal.person_id);
+        const actionInfo = getActionTypeWithSafeguards(signal.level, safeguards);
+        
+        return {
+          id: signal.id,
+          ts: signal.ts,
+          person_id: signal.person_id,
+          person: (signal.person as any).name,
+          email: (signal.person as any).email,
+          level: signal.level,
+          reason: signal.reason,
+          score_delta: signal.score_delta ?? 0,
+          action_type: actionInfo.type,
+          action_disabled: actionInfo.disabled,
+          action_reason: actionInfo.reason
+        };
+      });
 
       // Group by person_id and level, then get most recent (ROW_NUMBER() OVER logic)
       const ranked = new Map<string, RankedSignalData>();
@@ -106,9 +135,37 @@ export const useRankedSignals = ({ levelFilter, startDate, endDate, multipleLeve
   });
 };
 
-function getActionType(level: string): 'release' | 'coach' | 'kudos' | 'none' {
-  if (level === 'risk' || level === 'critical') return 'release';
-  if (level === 'warning' || level === 'warn') return 'coach';
-  if (level === 'info') return 'kudos';
-  return 'none';
+function getActionTypeWithSafeguards(level: string, safeguards: any): { 
+  type: 'release' | 'coach' | 'kudos' | 'none', 
+  disabled: boolean, 
+  reason?: string 
+} {
+  if (level === 'critical' || level === 'risk') {
+    if (!safeguards) {
+      return { type: 'release', disabled: true, reason: 'Safeguard data unavailable' };
+    }
+    
+    const isDisabled = !safeguards.tenure_ok || !safeguards.data_ok;
+    let reason = '';
+    
+    if (!safeguards.tenure_ok && !safeguards.data_ok) {
+      reason = 'Tenure < 21 days AND insufficient evidence';
+    } else if (!safeguards.tenure_ok) {
+      reason = 'Tenure < 21 days';
+    } else if (!safeguards.data_ok) {
+      reason = 'Insufficient evidence (< 3 data points in 14 days)';
+    }
+    
+    return { type: 'release', disabled: isDisabled, reason };
+  }
+  
+  if (level === 'warn') {
+    return { type: 'coach', disabled: false };
+  }
+  
+  if (level === 'info') {
+    return { type: 'kudos', disabled: false };
+  }
+  
+  return { type: 'none', disabled: false };
 }

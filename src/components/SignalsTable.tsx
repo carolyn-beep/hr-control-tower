@@ -267,8 +267,10 @@ const SignalsTable = () => {
                                 : signal.level === 'critical' 
                                   ? 'text-destructive'
                                   : signal.level === 'risk'
-                                    ? 'text-warning'
-                                    : 'text-warning'
+                                    ? 'text-orange-600'
+                                    : signal.level === 'warn'
+                                      ? 'text-orange-500'
+                                      : 'text-orange-500'
                             }`}>
                               {signal.score_delta > 0 
                                 ? `+${Math.round(signal.score_delta * 10) / 10} Risk ↑`
@@ -281,20 +283,29 @@ const SignalsTable = () => {
                         </TableCell>
                         <TableCell className="text-right">
                           {signal.action_type === 'release' && (
-                            <Button 
-                              variant="outline"
-                              size="sm"
-                              className="shadow-soft hover:shadow-dashboard transition-all duration-200 hover:scale-105 bg-purple-500/10 border-purple-500/20 text-purple-600 hover:bg-purple-500/20"
-                              onClick={() => {
-                                setSelectedPersonId(signal.person_id);
-                                setSelectedPersonName(signal.person);
-                                setSelectedSignalReason(signal.reason);
-                                setModalOpen(true);
-                              }}
-                            >
-                              <UserCheck className="h-4 w-4 mr-2" />
-                              Evaluate for Release
-                            </Button>
+                            <div className="space-y-1">
+                              <Button 
+                                variant="outline"
+                                size="sm"
+                                className="shadow-soft hover:shadow-dashboard transition-all duration-200 hover:scale-105 bg-purple-500/10 border-purple-500/20 text-purple-600 hover:bg-purple-500/20"
+                                onClick={() => {
+                                  setSelectedPersonId(signal.person_id);
+                                  setSelectedPersonName(signal.person);
+                                  setSelectedSignalReason(signal.reason);
+                                  setModalOpen(true);
+                                }}
+                                disabled={signal.action_disabled}
+                                title={signal.action_disabled ? signal.action_reason : undefined}
+                              >
+                                <UserCheck className="h-4 w-4 mr-2" />
+                                Evaluate for Release
+                              </Button>
+                              {signal.action_disabled && signal.action_reason && (
+                                <div className="text-xs text-muted-foreground max-w-32 text-right">
+                                  {signal.action_reason}
+                                </div>
+                              )}
+                            </div>
                           )}
                           {signal.action_type === 'coach' && (
                             <Button 
@@ -368,8 +379,10 @@ const SignalsTable = () => {
                               : signal.level === 'critical' 
                                 ? 'text-destructive'
                                 : signal.level === 'risk'
-                                  ? 'text-warning'
-                                  : 'text-warning'
+                                  ? 'text-orange-600'
+                                  : signal.level === 'warn'
+                                    ? 'text-orange-500'
+                                    : 'text-orange-500'
                           }`}>
                             {signal.score_delta > 0 
                               ? `+${Math.round(signal.score_delta * 10) / 10} Risk ↑`
@@ -381,20 +394,29 @@ const SignalsTable = () => {
                       
                       <div className="pt-2">
                         {signal.action_type === 'release' && (
-                          <Button 
-                            variant="outline"
-                            size="sm"
-                            className="w-full shadow-soft hover:shadow-dashboard transition-all duration-200 bg-purple-500/10 border-purple-500/20 text-purple-600 hover:bg-purple-500/20"
-                            onClick={() => {
-                              setSelectedPersonId(signal.person_id);
-                              setSelectedPersonName(signal.person);
-                              setSelectedSignalReason(signal.reason);
-                              setModalOpen(true);
-                            }}
-                          >
-                            <UserCheck className="h-4 w-4 mr-2" />
-                            Evaluate for Release
-                          </Button>
+                          <div className="space-y-2">
+                            <Button 
+                              variant="outline"
+                              size="sm"
+                              className="w-full shadow-soft hover:shadow-dashboard transition-all duration-200 bg-purple-500/10 border-purple-500/20 text-purple-600 hover:bg-purple-500/20"
+                              onClick={() => {
+                                setSelectedPersonId(signal.person_id);
+                                setSelectedPersonName(signal.person);
+                                setSelectedSignalReason(signal.reason);
+                                setModalOpen(true);
+                              }}
+                              disabled={signal.action_disabled}
+                              title={signal.action_disabled ? signal.action_reason : undefined}
+                            >
+                              <UserCheck className="h-4 w-4 mr-2" />
+                              Evaluate for Release
+                            </Button>
+                            {signal.action_disabled && signal.action_reason && (
+                              <div className="text-xs text-muted-foreground text-center">
+                                {signal.action_reason}
+                              </div>
+                            )}
+                          </div>
                         )}
                         {signal.action_type === 'coach' && (
                           <Button 
