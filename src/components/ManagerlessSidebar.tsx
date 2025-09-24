@@ -31,7 +31,7 @@ const ManagerlessSidebar = () => {
         <div className="mb-8 p-4 bg-gradient-accent rounded-xl border border-border/50">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center shadow-glow">
-              <span className="text-primary-foreground font-bold text-sm">AI</span>
+              <span className="text-primary-foreground font-bold text-sm">CO</span>
             </div>
             <div>
               <h2 className="font-bold text-foreground">Managerless</h2>
