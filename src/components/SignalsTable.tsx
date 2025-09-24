@@ -41,6 +41,12 @@ const SignalsTable = () => {
   };
 
   const [levelFilter, setLevelFilter] = useState<string>(getInitialLevelFilter());
+  const getInitialSortMode = () => {
+    const sortParam = searchParams.get('sort');
+    if (sortParam === 'ts_desc' || sortParam === 'ts_asc' || sortParam === 'priority') return sortParam;
+    return 'priority';
+  };
+  const [sortMode, setSortMode] = useState<'ts_desc' | 'ts_asc' | 'priority'>(getInitialSortMode());
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
   const [selectedPersonId, setSelectedPersonId] = useState<string>('');
@@ -66,14 +72,16 @@ const SignalsTable = () => {
     levelFilter: getApiLevelFilter(), 
     multipleLevels: multipleLevelsParam,
     startDate: startDate?.toISOString(),
-    endDate: endDate?.toISOString()
+    endDate: endDate?.toISOString(),
+    sortMode,
   });
 
   const { data: signals, isLoading, error } = useRankedSignals({
     levelFilter: getApiLevelFilter(),
     startDate: startDate?.toISOString(),
     endDate: endDate?.toISOString(),
-    multipleLevels: multipleLevelsParam
+    multipleLevels: multipleLevelsParam,
+    sortMode,
   });
 
   const recognizeAndCloseLoop = useRecognizeAndCloseLoop();

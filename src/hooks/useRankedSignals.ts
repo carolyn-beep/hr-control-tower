@@ -20,13 +20,14 @@ interface UseRankedSignalsProps {
   startDate?: string;
   endDate?: string;
   multipleLevels?: string[];
+  sortMode?: 'ts_desc' | 'ts_asc' | 'priority';
 }
 
-export const useRankedSignals = ({ levelFilter, startDate, endDate, multipleLevels }: UseRankedSignalsProps = {}) => {
-  console.log('useRankedSignals called with:', { levelFilter, startDate, endDate, multipleLevels });
+export const useRankedSignals = ({ levelFilter, startDate, endDate, multipleLevels, sortMode = 'priority' }: UseRankedSignalsProps = {}) => {
+  console.log('useRankedSignals called with:', { levelFilter, startDate, endDate, multipleLevels, sortMode });
   
   return useQuery({
-    queryKey: ['ranked-signals', levelFilter, startDate, endDate, multipleLevels],
+    queryKey: ['ranked-signals', levelFilter, startDate, endDate, multipleLevels, sortMode],
     queryFn: async (): Promise<RankedSignalData[]> => {
       // Fetch all signals with person data
       let query = supabase
@@ -131,18 +132,22 @@ export const useRankedSignals = ({ levelFilter, startDate, endDate, multipleLeve
         console.log('After levelFilter:', result.length);
       }
 
-      // Sort by priority and timestamp (matching SQL ORDER BY)
-      const sortedResult = result.sort((a, b) => {
-        const levelPriority = { 'critical': 1, 'risk': 2, 'warn': 3, 'info': 4 };
-        const aPriority = levelPriority[a.level as keyof typeof levelPriority] || 5;
-        const bPriority = levelPriority[b.level as keyof typeof levelPriority] || 5;
-        
-        if (aPriority !== bPriority) {
-          return aPriority - bPriority;
-        }
-        
-        return new Date(b.ts).getTime() - new Date(a.ts).getTime();
-      });
+      // Sort based on sortMode
+      let sortedResult: RankedSignalData[] = [];
+      if (sortMode === 'ts_desc') {
+        sortedResult = result.sort((a, b) => new Date(b.ts).getTime() - new Date(a.ts).getTime());
+      } else if (sortMode === 'ts_asc') {
+        sortedResult = result.sort((a, b) => new Date(a.ts).getTime() - new Date(b.ts).getTime());
+      } else {
+        // Default: priority then timestamp
+        sortedResult = result.sort((a, b) => {
+          const levelPriority = { 'critical': 1, 'risk': 2, 'warn': 3, 'info': 4 };
+          const aPriority = levelPriority[a.level as keyof typeof levelPriority] || 5;
+          const bPriority = levelPriority[b.level as keyof typeof levelPriority] || 5;
+          if (aPriority !== bPriority) return aPriority - bPriority;
+          return new Date(b.ts).getTime() - new Date(a.ts).getTime();
+        });
+      }
 
       console.log('Final result:', sortedResult.length, 'signals');
       console.log('Final signals preview:', sortedResult.slice(0, 3));
