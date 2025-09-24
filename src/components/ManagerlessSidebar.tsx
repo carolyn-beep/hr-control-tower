@@ -9,7 +9,7 @@ import {
   ChevronRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 
@@ -22,6 +22,7 @@ const navigationItems = [
 
 const ManagerlessSidebar = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
 
   return (
@@ -99,7 +100,19 @@ const ManagerlessSidebar = () => {
             </div>
             
             <div className="space-y-3">
-              <div className="group p-3 bg-gradient-accent rounded-lg hover:shadow-soft transition-all duration-200 hover:scale-105 interactive-card">
+              <div
+                role="button"
+                tabIndex={0}
+                aria-label="Open Auto-Coach"
+                onClick={() => navigate('/workflows')}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    navigate('/workflows');
+                  }
+                }}
+                className="group p-3 bg-gradient-accent rounded-lg hover:shadow-soft transition-all duration-200 hover:scale-105 interactive-card cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+              >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
@@ -117,7 +130,19 @@ const ManagerlessSidebar = () => {
                 </div>
               </div>
               
-              <div className="group p-3 bg-gradient-accent rounded-lg hover:shadow-soft transition-all duration-200 hover:scale-105 interactive-card">
+              <div
+                role="button"
+                tabIndex={0}
+                aria-label="Open Risk Engine"
+                onClick={() => navigate('/signals')}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    navigate('/signals');
+                  }
+                }}
+                className="group p-3 bg-gradient-accent rounded-lg hover:shadow-soft transition-all duration-200 hover:scale-105 interactive-card cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+              >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <div className="p-2 bg-warning/10 rounded-lg group-hover:bg-warning/20 transition-colors">
