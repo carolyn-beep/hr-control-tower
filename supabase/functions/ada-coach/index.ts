@@ -49,7 +49,6 @@ serve(async (req) => {
             content: `Question: ${question}\n\nContext (optional): ${JSON.stringify(devContext || {})}`
           }
         ],
-        temperature: 0.3,
         max_completion_tokens: 800,
       }),
     });
