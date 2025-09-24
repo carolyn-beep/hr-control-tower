@@ -205,7 +205,7 @@ export const AdaCoachModal = ({ open, onOpenChange, personId, personName }: AdaC
                       key={index}
                       variant="ghost"
                       size="sm"
-                      className="text-left justify-start h-auto py-2 px-3 text-xs"
+                      className="text-left justify-start h-auto py-2 px-3 text-xs w-full whitespace-normal break-words"
                       onClick={() => setQuestion(sample)}
                       disabled={loading}
                     >

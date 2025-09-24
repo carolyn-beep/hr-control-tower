@@ -197,7 +197,7 @@ export const StandaloneAdaModal = ({ open, onOpenChange }: AdaModalProps) => {
                         key={index}
                         variant="ghost"
                         size="sm"
-                        className="text-left justify-start h-auto py-2 px-3 text-xs w-full hover:bg-accent"
+                        className="text-left justify-start h-auto py-2 px-3 text-xs w-full whitespace-normal break-words hover:bg-accent"
                         onClick={() => handleSampleQuestion(sample)}
                         disabled={loading}
                       >
@@ -229,7 +229,7 @@ export const StandaloneAdaModal = ({ open, onOpenChange }: AdaModalProps) => {
                         key={index}
                         variant="ghost"
                         size="sm"
-                        className="text-left justify-start h-auto py-2 px-3 text-xs w-full hover:bg-accent"
+                        className="text-left justify-start h-auto py-2 px-3 text-xs w-full whitespace-normal break-words hover:bg-accent"
                         onClick={() => handleSampleQuestion(sample)}
                         disabled={loading}
                       >
