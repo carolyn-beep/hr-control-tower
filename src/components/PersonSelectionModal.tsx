@@ -35,6 +35,7 @@ export const PersonSelectionModal = ({ open, onOpenChange, onPersonSelect }: Per
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    console.log('PersonSelectionModal: Modal open changed to:', open);
     if (open) {
       fetchPeople();
     }
@@ -55,6 +56,7 @@ export const PersonSelectionModal = ({ open, onOpenChange, onPersonSelect }: Per
 
   const fetchPeople = async () => {
     setLoading(true);
+    console.log('PersonSelectionModal: Starting to fetch people...');
     try {
       // Get people with their latest risk scores
       const { data: personsData, error: personsError } = await supabase
@@ -63,7 +65,12 @@ export const PersonSelectionModal = ({ open, onOpenChange, onPersonSelect }: Per
         .eq('status', 'active')
         .order('name');
 
-      if (personsError) throw personsError;
+      console.log('PersonSelectionModal: Person query result:', { personsData, personsError });
+
+      if (personsError) {
+        console.error('PersonSelectionModal: Person query error:', personsError);
+        throw personsError;
+      }
 
       // Get risk scores for each person
       const peopleWithRisk: Person[] = [];
@@ -82,10 +89,11 @@ export const PersonSelectionModal = ({ open, onOpenChange, onPersonSelect }: Per
         });
       }
 
+      console.log('PersonSelectionModal: Final people with risk:', peopleWithRisk);
       setPeople(peopleWithRisk);
       setFilteredPeople(peopleWithRisk);
     } catch (error) {
-      console.error('Error fetching people:', error);
+      console.error('PersonSelectionModal: Error fetching people:', error);
     } finally {
       setLoading(false);
     }
