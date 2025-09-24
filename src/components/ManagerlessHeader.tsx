@@ -19,11 +19,11 @@ const ManagerlessHeader = () => {
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-gradient-primary rounded-xl flex items-center justify-center shadow-glow animate-glow">
-              <span className="text-primary-foreground font-bold text-sm">ML</span>
+              <span className="text-primary-foreground font-bold text-sm">CO</span>
             </div>
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold gradient-text">Managerless HR</h1>
-              <p className="text-xs text-muted-foreground">Control Tower</p>
+              <h1 className="text-xl sm:text-2xl font-bold gradient-text">CodeOps AI</h1>
+              <p className="text-xs text-muted-foreground">Developer Lifecycle</p>
             </div>
           </div>
         </div>

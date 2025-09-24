@@ -95,7 +95,7 @@ const SearchCommand: React.FC<SearchCommandProps> = ({ open, setOpen }) => {
             onSelect={() => handleSelect('page-')}
           >
             <FileText className="mr-2 h-4 w-4" />
-            <span>Control Tower</span>
+            <span>Dashboard</span>
           </CommandItem>
           <CommandItem
             value="page-signals"

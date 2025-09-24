@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 
 const navigationItems = [
-  { icon: BarChart3, label: "Control Tower", path: "/", description: "Overview & Analytics" },
+  { icon: BarChart3, label: "Dashboard", path: "/", description: "Overview & Analytics" },
   { icon: Activity, label: "Signals", path: "/signals", badge: "12", description: "Risk Detection" },
   { icon: Users, label: "People", path: "/people", description: "Team Members" },
   { icon: GitBranch, label: "Workflows", path: "/workflows", badge: "4", description: "Automation" },

@@ -203,8 +203,8 @@ const ControlTower = () => {
                 <div className="absolute bottom-4 left-4 w-24 h-24 bg-primary-glow/20 rounded-full blur-2xl animate-pulse"></div>
                 
                 <div className="text-primary-foreground relative z-10 animate-slide-up">
-                  <h1 className="text-4xl font-bold mb-3">Managerless HR Control Tower</h1>
-                  <p className="text-lg opacity-90 mb-4">AI-powered risk detection and automated coaching without traditional management</p>
+                  <h1 className="text-4xl font-bold mb-3">CodeOps AI</h1>
+                  <p className="text-lg opacity-90 mb-4">Managerless developer lifecycle system — signals, AI-coaching, and evidence-based release at scale.</p>
                   <div className="flex items-center space-x-4 text-sm">
                     <div className="flex items-center space-x-2">
                       <div className="w-3 h-3 bg-success rounded-full animate-pulse"></div>
