@@ -26,9 +26,11 @@ const SignalsTable = () => {
   // Get initial filters from URL parameters
   const getInitialLevelFilter = () => {
     const levelParam = searchParams.get('level');
+    console.log('URL level param:', levelParam);
     if (levelParam) {
       // Handle multiple levels like "risk,critical"
-      const levels = levelParam.split(',');
+      const levels = levelParam.split(',').map(l => l.trim());
+      console.log('Parsed levels:', levels);
       if (levels.length === 1) {
         return levels[0];
       } else if (levels.includes('risk') && levels.includes('critical')) {
@@ -52,17 +54,26 @@ const SignalsTable = () => {
   const { toast } = useToast();
   // Modify levelFilter for API call
   const getApiLevelFilter = () => {
+    console.log('Current levelFilter:', levelFilter);
     if (levelFilter === 'risk_critical') {
       return 'risk'; // We'll handle multiple levels in the hook
     }
     return levelFilter;
   };
 
+  const multipleLevelsParam = levelFilter === 'risk_critical' ? ['risk', 'critical'] : undefined;
+  console.log('Query params:', { 
+    levelFilter: getApiLevelFilter(), 
+    multipleLevels: multipleLevelsParam,
+    startDate: startDate?.toISOString(),
+    endDate: endDate?.toISOString()
+  });
+
   const { data: signals, isLoading, error } = useRankedSignals({
     levelFilter: getApiLevelFilter(),
     startDate: startDate?.toISOString(),
     endDate: endDate?.toISOString(),
-    multipleLevels: levelFilter === 'risk_critical' ? ['risk', 'critical'] : undefined
+    multipleLevels: multipleLevelsParam
   });
 
   const recognizeAndCloseLoop = useRecognizeAndCloseLoop();

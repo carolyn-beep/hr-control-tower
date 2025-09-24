@@ -23,6 +23,8 @@ interface UseRankedSignalsProps {
 }
 
 export const useRankedSignals = ({ levelFilter, startDate, endDate, multipleLevels }: UseRankedSignalsProps = {}) => {
+  console.log('useRankedSignals called with:', { levelFilter, startDate, endDate, multipleLevels });
+  
   return useQuery({
     queryKey: ['ranked-signals', levelFilter, startDate, endDate, multipleLevels],
     queryFn: async (): Promise<RankedSignalData[]> => {
@@ -53,7 +55,11 @@ export const useRankedSignals = ({ levelFilter, startDate, endDate, multipleLeve
 
       const { data, error } = await query;
 
+      console.log('Raw signal data:', data?.length, 'signals');
+      console.log('First few signals:', data?.slice(0, 3));
+
       if (error) {
+        console.error('Error fetching signals:', error);
         throw error;
       }
 
@@ -112,14 +118,21 @@ export const useRankedSignals = ({ levelFilter, startDate, endDate, multipleLeve
       // Convert back to array and apply level filters
       let result = Array.from(ranked.values());
 
+      console.log('Before filtering - signals count:', result.length);
+      console.log('Filter params:', { multipleLevels, levelFilter });
+
       if (multipleLevels && multipleLevels.length > 0) {
+        console.log('Filtering with multipleLevels:', multipleLevels);
         result = result.filter(signal => multipleLevels.includes(signal.level));
+        console.log('After multipleLevels filter:', result.length);
       } else if (levelFilter && levelFilter !== 'all') {
+        console.log('Filtering with levelFilter:', levelFilter);
         result = result.filter(signal => signal.level === levelFilter);
+        console.log('After levelFilter:', result.length);
       }
 
       // Sort by priority and timestamp (matching SQL ORDER BY)
-      return result.sort((a, b) => {
+      const sortedResult = result.sort((a, b) => {
         const levelPriority = { 'critical': 1, 'risk': 2, 'warn': 3, 'info': 4 };
         const aPriority = levelPriority[a.level as keyof typeof levelPriority] || 5;
         const bPriority = levelPriority[b.level as keyof typeof levelPriority] || 5;
@@ -130,6 +143,10 @@ export const useRankedSignals = ({ levelFilter, startDate, endDate, multipleLeve
         
         return new Date(b.ts).getTime() - new Date(a.ts).getTime();
       });
+
+      console.log('Final result:', sortedResult.length, 'signals');
+      console.log('Final signals preview:', sortedResult.slice(0, 3));
+      return sortedResult;
     },
     refetchInterval: 30000, // Refresh every 30 seconds
   });
