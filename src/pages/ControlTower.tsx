@@ -39,6 +39,7 @@ import { useReleaseSafeguards } from "@/hooks/useReleaseSafeguards";
 import { useRefreshDemoData } from "@/hooks/useRefreshDemoData";
 import { ReleaseEvaluationModal } from "@/components/ReleaseEvaluationModal";
 import { AutoCoachModal } from "@/components/AutoCoachModal";
+import { CoachingPlansModal } from "@/components/CoachingPlansModal";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as ChartTooltip, ResponsiveContainer } from 'recharts';
 import { useToast } from "@/hooks/use-toast";
 
@@ -130,11 +131,12 @@ const ControlTower = () => {
   const [selectedReason, setSelectedReason] = useState<string>('');
   const [modalOpen, setModalOpen] = useState(false);
   const [autoCoachModalOpen, setAutoCoachModalOpen] = useState(false);
+  const [coachingPlansModalOpen, setCoachingPlansModalOpen] = useState(false);
 
   // Create dynamic risk metrics based on real data
   const riskMetrics = [
     {
-      title: "Critical Signals",
+      title: "Critical Dev Signals (7d)",
       value: isLoading ? "..." : metrics?.criticalSignals.toString() || "0",
       change: isLoading ? "..." : metrics?.criticalSignalsChange || 0,
       baseline: "from last week",
@@ -143,7 +145,7 @@ const ControlTower = () => {
       bgColor: "bg-destructive/10"
     },
     {
-      title: "Risk Signals", 
+      title: "Risk Dev Signals (7d)", 
       value: isLoading ? "..." : metrics?.riskSignals.toString() || "0",
       change: isLoading ? "..." : metrics?.riskSignalsChange || 0,
       baseline: "from last week",
@@ -161,7 +163,7 @@ const ControlTower = () => {
       bgColor: "bg-primary/10"
     },
     {
-      title: "Recovered (7d)",
+      title: "Recovered Devs (7d)",
       value: isLoading ? "..." : metrics?.recoveredSignals.toString() || "0",
       change: isLoading ? "..." : metrics?.recoveredSignalsChange || 0,
       baseline: "from last week",
@@ -251,14 +253,14 @@ const ControlTower = () => {
                   className={`relative bg-gradient-card border-border shadow-card hover:shadow-dashboard transition-all duration-500 group hover-lift animate-slide-up cursor-pointer`}
                   style={{ animationDelay: `${index * 100}ms` }}
                   onClick={() => {
-                    if (metric.title === "Critical Signals") {
+                    if (metric.title === "Critical Dev Signals (7d)") {
                       navigate('/signals?level=critical');
-                    } else if (metric.title === "Risk Signals") {
+                    } else if (metric.title === "Risk Dev Signals (7d)") {
                       navigate('/signals?level=risk');
                     } else if (metric.title === "Active Coaching") {
-                      navigate('/people');
-                    } else if (metric.title === "Recovered (7d)") {
-                      navigate('/signals?level=info');
+                      setCoachingPlansModalOpen(true);
+                    } else if (metric.title === "Recovered Devs (7d)") {
+                      navigate('/signals?level=info&range=7d');
                     }
                   }}
                 >
@@ -725,14 +727,19 @@ const ControlTower = () => {
          reason={selectedReason}
        />
        
-       <AutoCoachModal
-         open={autoCoachModalOpen}
-         onOpenChange={setAutoCoachModalOpen}
-         personId={selectedPersonId}
-         personName={selectedPersonName}
-         signalId={selectedSignalId}
-         reason={selectedReason}
-       />
+        <AutoCoachModal
+          open={autoCoachModalOpen}
+          onOpenChange={setAutoCoachModalOpen}
+          personId={selectedPersonId}
+          personName={selectedPersonName}
+          signalId={selectedSignalId}
+          reason={selectedReason}
+        />
+        
+        <CoachingPlansModal
+          open={coachingPlansModalOpen}
+          onOpenChange={setCoachingPlansModalOpen}
+        />
      </div>
      </TooltipProvider>
    );

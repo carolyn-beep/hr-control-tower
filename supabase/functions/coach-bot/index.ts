@@ -78,7 +78,7 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in coach-bot function:', error);
     return new Response(JSON.stringify({ 
-      error: error.message,
+      error: error instanceof Error ? error.message : 'Unknown error occurred',
       message: "I encountered an issue generating your coaching plan. Please try again.",
       steps: ["Contact your manager for support", "Review recent project deliverables", "Schedule a performance review"]
     }), {

@@ -132,7 +132,7 @@ POLICY: ${payload.policy_excerpt}`;
   } catch (error) {
     console.error('Error in release-bot function:', error);
     return new Response(JSON.stringify({ 
-      error: error.message,
+      error: error instanceof Error ? error.message : 'Unknown error occurred',
       details: 'AI service error - using fallback logic recommended'
     }), {
       status: 500,
