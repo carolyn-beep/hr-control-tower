@@ -691,6 +691,10 @@ const ControlTower = () => {
                         return `${diffDays}d ago`;
                       };
 
+                      // Safely access the person name (handle both formats)
+                      const personName = typeof signal.person === 'string' ? signal.person : (signal.person as any)?.name || 'Unknown';
+                      const personEmail = typeof signal.person === 'string' ? signal.email : (signal.person as any)?.email || '';
+
                       return (
                         <div 
                           key={signal.id} 
@@ -704,7 +708,7 @@ const ControlTower = () => {
                               {getBadgeText(signal.level)}
                             </Badge>
                             <div className="flex-1">
-                              <div className="font-semibold text-foreground">{signal.person}</div>
+                              <div className="font-semibold text-foreground">{personName}</div>
                               <div className="text-sm text-muted-foreground">{signal.reason}</div>
                               <div className="text-xs text-muted-foreground mt-1">{formatTimeAgo(signal.ts)}</div>
                             </div>
@@ -733,14 +737,14 @@ const ControlTower = () => {
                                signal={signal}
                                onEvaluateClick={() => {
                                  setSelectedPersonId(signal.person_id);
-                                 setSelectedPersonName(signal.person);
+                                 setSelectedPersonName(personName);
                                  setSelectedSignalId(signal.id);
                                  setSelectedReason(signal.reason);
                                  setModalOpen(true);
                                }}
                                onCoachClick={() => {
                                  setSelectedPersonId(signal.person_id);
-                                 setSelectedPersonName(signal.person);
+                                 setSelectedPersonName(personName);
                                  setSelectedSignalId(signal.id);
                                  setSelectedReason(signal.reason);
                                  setAutoCoachModalOpen(true);
