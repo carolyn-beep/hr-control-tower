@@ -37,19 +37,19 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'gpt-5-mini-2025-08-07',
-        response_format: { type: "json_object" },
+        model: 'gpt-4o-mini',
         messages: [
           {
             role: "system",
-            content: "You are Ada, an AI coach for software developers. You explain signals, risk scores, and coaching loops based on data. Be concise, direct, and actionable. Always return JSON with keys: reply, tips[]."
+            content: "You are Ada, an AI coach for software developers. You explain signals, risk scores, and coaching loops based on data. Be concise, direct, and actionable. Prefer JSON with keys: reply, tips[]."
           },
           {
             role: "user",
             content: `Question: ${question}\n\nContext (optional): ${JSON.stringify(devContext || {})}`
           }
         ],
-        max_completion_tokens: 800,
+        max_tokens: 800,
+        temperature: 0.2
       }),
     });
 
@@ -66,18 +66,21 @@ serve(async (req) => {
       throw new Error('Invalid response format from OpenAI');
     }
 
-    let adaResult;
+    let adaResult: { reply: string; tips: string[] };
     try {
       adaResult = JSON.parse(data.choices[0].message.content);
-    } catch (parseError) {
-      console.error('Failed to parse Ada response as JSON:', data.choices[0].message.content);
-      throw new Error('Invalid JSON response from Ada');
-    }
-
-    // Validate the Ada response structure
-    if (!adaResult.reply || !Array.isArray(adaResult.tips)) {
-      console.error('Ada response missing required fields:', adaResult);
-      throw new Error('Ada response missing required fields (reply, tips)');
+      // Ensure structure
+      if (typeof adaResult.reply !== 'string') {
+        adaResult.reply = String(adaResult.reply ?? '');
+      }
+      if (!Array.isArray(adaResult.tips)) {
+        adaResult.tips = [];
+      }
+    } catch (_parseError) {
+      // Fallback: treat content as plain text
+      const content = data.choices[0].message.content ?? '';
+      console.error('Failed to parse Ada response as JSON, using fallback text');
+      adaResult = { reply: content, tips: [] };
     }
 
     return new Response(JSON.stringify(adaResult), {
