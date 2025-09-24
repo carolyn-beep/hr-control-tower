@@ -12,9 +12,10 @@ import {
 } from "@/components/ui/drawer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { usePersonKPIs, useKPIBenchmarks } from "@/hooks/usePersonKPIs";
-import { Bot, UserCheck, X, TrendingUp, TrendingDown } from "lucide-react";
+import { Bot, UserCheck, X, TrendingUp, TrendingDown, MessageSquare } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer } from "recharts";
 import { AutoCoachModal } from "./AutoCoachModal";
+import { AdaCoachModal } from "./AdaCoachModal";
 import { ReleaseEvaluationModal } from "./ReleaseEvaluationModal";
 
 interface PersonDrawerProps {
@@ -36,6 +37,7 @@ const TARGET_KPIS = ['PRs/week', 'Review turnaround', 'Lead time', 'Bug reopen r
 
 export const PersonDrawer = ({ open, onOpenChange, person }: PersonDrawerProps) => {
   const [autoCoachOpen, setAutoCoachOpen] = useState(false);
+  const [adaCoachOpen, setAdaCoachOpen] = useState(false);
   const [releaseEvalOpen, setReleaseEvalOpen] = useState(false);
   
   const { data: kpiData = [], isLoading: kpiLoading } = usePersonKPIs(person?.id || null);
@@ -215,22 +217,27 @@ export const PersonDrawer = ({ open, onOpenChange, person }: PersonDrawerProps) 
           </div>
 
           <DrawerFooter className="border-t border-border">
-            <div className="flex space-x-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
               <Button 
                 onClick={() => setAutoCoachOpen(true)}
-                className="flex-1"
                 variant="outline"
               >
                 <Bot className="h-4 w-4 mr-2" />
-                Start Auto-Coach
+                DevCoachBot
+              </Button>
+              <Button 
+                onClick={() => setAdaCoachOpen(true)}
+                variant="outline"
+              >
+                <MessageSquare className="h-4 w-4 mr-2" />
+                Ask Ada
               </Button>
               <Button 
                 onClick={() => setReleaseEvalOpen(true)}
-                className="flex-1"
                 variant="default"
               >
                 <UserCheck className="h-4 w-4 mr-2" />
-                Evaluate for Release
+                Evaluate Release
               </Button>
             </div>
           </DrawerFooter>
@@ -240,6 +247,13 @@ export const PersonDrawer = ({ open, onOpenChange, person }: PersonDrawerProps) 
       <AutoCoachModal
         open={autoCoachOpen}
         onOpenChange={setAutoCoachOpen}
+        personId={person.id}
+        personName={person.name}
+      />
+
+      <AdaCoachModal
+        open={adaCoachOpen}
+        onOpenChange={setAdaCoachOpen}
         personId={person.id}
         personName={person.name}
       />
