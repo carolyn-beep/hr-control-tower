@@ -147,7 +147,7 @@ export const StandaloneAdaModal = ({ open, onOpenChange }: AdaModalProps) => {
                 </div>
 
                 {adaResponse.tips && adaResponse.tips.length > 0 && (
-                  <div className="bg-warning-soft rounded-lg p-4 border border-warning/20">
+                  <div className="bg-accent rounded-lg p-4 border border-border">
                     <h4 className="flex items-center space-x-2 font-medium text-sm mb-3">
                       <div className="p-1.5 rounded-lg bg-warning">
                         <Lightbulb className="h-3 w-3 text-warning-foreground" />
@@ -166,7 +166,7 @@ export const StandaloneAdaModal = ({ open, onOpenChange }: AdaModalProps) => {
                 )}
 
                 {adaResponse.error && (
-                  <div className="text-xs text-destructive bg-destructive-soft rounded-lg p-3 border border-destructive/20">
+                  <div className="text-xs text-destructive bg-accent rounded-lg p-3 border border-destructive/20">
                     <span className="font-medium">Technical details:</span> {adaResponse.error}
                   </div>
                 )}
@@ -245,7 +245,7 @@ export const StandaloneAdaModal = ({ open, onOpenChange }: AdaModalProps) => {
 
           {/* Ada Capabilities */}
           {!adaResponse && !loading && (
-            <Card className="bg-primary-soft border-primary/20">
+            <Card className="bg-accent border-border">
               <CardContent className="pt-4">
                 <div className="flex items-start space-x-3">
                   <div className="p-2 rounded-lg bg-primary">
