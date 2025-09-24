@@ -154,6 +154,19 @@ const ControlTower = () => {
     }
   };
 
+  // Make AI Automation Status rows act like buttons
+  const handleAutomationClick = (system: string) => {
+    console.log('Automation row clicked:', system);
+    if (system.includes('Auto-Coach')) {
+      setPersonSelectionModalOpen(true);
+    } else if (system.includes('Risk')) {
+      navigate('/signals');
+    } else if (system.includes('Workflow')) {
+      navigate('/workflows');
+    } else {
+      toast({ title: 'Performance Analyzer', description: 'Training — feature coming soon.' });
+    }
+  };
   // Create dynamic risk metrics based on real data
   const riskMetrics = [
     {
