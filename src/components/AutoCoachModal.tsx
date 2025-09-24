@@ -24,8 +24,10 @@ interface KPISnapshot {
 }
 
 interface CoachBotResult {
-  message: string;
-  steps: string[];
+  short_dm: string;
+  plan_bullets: string[];
+  review_comment: string;
+  measure: string;
 }
 
 interface AutoCoachModalProps {
@@ -113,7 +115,8 @@ export const AutoCoachModal = ({ open, onOpenChange, personId, personName, signa
             name: profile.name,
             role: profile.department || 'Team Member'
           },
-          kpiData: kpis
+          kpiData: kpis,
+          prLinks: [] // TODO: Fetch recent PR links from performance_event meta or external source
         }
       });
 
@@ -130,12 +133,14 @@ export const AutoCoachModal = ({ open, onOpenChange, personId, personName, signa
       
       // Fallback response in case of error
       setCoachResult({
-        message: `Hi ${profile.name}, I encountered an issue generating your coaching plan. Please try again or contact support.`,
-        steps: [
-          "Review recent project deliverables",
-          "Schedule a performance review with your manager",
-          "Focus on completing current sprint goals"
-        ]
+        short_dm: `Hi ${profile.name}, I encountered an issue generating your coaching plan. Please try again or contact support.`,
+        plan_bullets: [
+          "Review recent project deliverables and identify blockers",
+          "Schedule a performance review with your team lead",
+          "Focus on completing current sprint goals with quality"
+        ],
+        review_comment: "Checklist: [ ] Code review completed [ ] Tests passing [ ] Documentation updated",
+        measure: "Complete current sprint commitments on time"
       });
     }
   };
@@ -149,8 +154,8 @@ export const AutoCoachModal = ({ open, onOpenChange, personId, personName, signa
         .from('coaching_plan')
         .insert({
           person_id: personId,
-          objective: coachResult.message,
-          playbook: coachResult.steps.join('\n• ')
+          objective: coachResult.short_dm,
+          playbook: `Plan: ${coachResult.plan_bullets.join('\n• ')}\n\nPR Review Template:\n${coachResult.review_comment}\n\nSuccess Measure:\n${coachResult.measure}`
         })
         .select()
         .single();
@@ -266,11 +271,11 @@ export const AutoCoachModal = ({ open, onOpenChange, personId, personName, signa
                 {/* Direct Message */}
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg">Initial Message</CardTitle>
+                    <CardTitle className="text-lg">Direct Message</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="bg-muted p-3 rounded text-sm">
-                      {coachResult.message}
+                    <div className="bg-muted p-3 rounded text-sm font-medium">
+                      {coachResult.short_dm}
                     </div>
                   </CardContent>
                 </Card>
@@ -278,17 +283,44 @@ export const AutoCoachModal = ({ open, onOpenChange, personId, personName, signa
                 {/* Plan Bullets */}
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg">Coaching Plan</CardTitle>
+                    <CardTitle className="text-lg">Action Plan</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <ul className="space-y-2">
-                      {coachResult.steps.map((step, index) => (
+                      {coachResult.plan_bullets.map((bullet, index) => (
                         <li key={index} className="flex items-start gap-2">
                           <span className="text-primary">•</span>
-                          <span className="text-sm">{step}</span>
+                          <span className="text-sm">{bullet}</span>
                         </li>
                       ))}
                     </ul>
+                  </CardContent>
+                </Card>
+
+                {/* Review Comment Template */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">PR Review Template</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="bg-accent/50 p-3 rounded text-sm font-mono">
+                      {coachResult.review_comment}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Copy this checklist to your next PR for consistent quality
+                    </p>
+                  </CardContent>
+                </Card>
+
+                {/* Success Measure */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-lg">72h Success Measure</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="bg-success/10 border border-success/20 p-3 rounded text-sm">
+                      <strong>Target:</strong> {coachResult.measure}
+                    </div>
                   </CardContent>
                 </Card>
               </>
