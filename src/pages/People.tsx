@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
+import { PersonDrawer } from "@/components/PersonDrawer";
 import { 
   Search, 
   TrendingUp, 
@@ -15,6 +16,7 @@ import {
   Bot,
   Activity
 } from "lucide-react";
+import { useState } from "react";
 
 const people = [
   {
@@ -128,6 +130,32 @@ const people = [
 ];
 
 const People = () => {
+  const [selectedPerson, setSelectedPerson] = useState<{
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+    department: string;
+    riskScore: number;
+    status: string;
+    avatar?: string;
+  } | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const handleViewDetails = (person: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+    department: string;
+    riskScore: number;
+    status: string;
+    avatar?: string;
+  }) => {
+    setSelectedPerson(person);
+    setDrawerOpen(true);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="flex">
@@ -328,6 +356,16 @@ const People = () => {
                         size="sm" 
                         variant="outline" 
                         className="flex-1 hover:bg-primary/5 hover:border-primary/20 hover:scale-105 transition-all duration-200"
+                        onClick={() => handleViewDetails({
+                          id: person.id.toString(),
+                          name: person.name,
+                          email: `${person.name.toLowerCase().replace(' ', '.')}@company.com`,
+                          role: person.role,
+                          department: person.department,
+                          riskScore: person.riskScore,
+                          status: person.status,
+                          avatar: person.avatar
+                        })}
                       >
                         <Activity className="h-3 w-3 mr-1" />
                         View Details
@@ -337,6 +375,16 @@ const People = () => {
                           size="sm" 
                           variant="gradient"
                           className="flex-1 shadow-glow hover:scale-105 transition-all duration-200"
+                          onClick={() => handleViewDetails({
+                            id: person.id.toString(),
+                            name: person.name,
+                            email: `${person.name.toLowerCase().replace(' ', '.')}@company.com`,
+                            role: person.role,
+                            department: person.department,
+                            riskScore: person.riskScore,
+                            status: person.status,
+                            avatar: person.avatar
+                          })}
                         >
                           <Bot className="h-3 w-3 mr-1" />
                           Coach
@@ -350,6 +398,12 @@ const People = () => {
           </main>
         </div>
       </div>
+
+      <PersonDrawer
+        open={drawerOpen}
+        onOpenChange={setDrawerOpen}
+        person={selectedPerson}
+      />
     </div>
   );
 };
