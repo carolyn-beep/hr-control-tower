@@ -329,6 +329,14 @@ export type Database = {
       }
     }
     Views: {
+      v_kpi_benchmarks: {
+        Row: {
+          kpi: string | null
+          median_14d: number | null
+          role: string | null
+        }
+        Relationships: []
+      }
       v_person_overview: {
         Row: {
           email: string | null
