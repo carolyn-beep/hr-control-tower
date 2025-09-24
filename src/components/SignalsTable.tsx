@@ -261,16 +261,16 @@ const SignalsTable = () => {
                         </TableCell>
                         <TableCell className="text-right font-mono">
                           {signal.score_delta !== null && signal.score_delta !== 0 ? (
-                            <span className={`text-sm font-semibold ${
+                           <span className={`text-sm font-semibold ${
                               signal.score_delta < 0 
                                 ? 'text-success' 
                                 : signal.level === 'critical' 
                                   ? 'text-destructive'
                                   : signal.level === 'risk'
-                                    ? 'text-orange-600'
+                                    ? 'text-warning'
                                     : signal.level === 'warn'
-                                      ? 'text-orange-500'
-                                      : 'text-orange-500'
+                                      ? 'text-warning'
+                                      : 'text-warning'
                             }`}>
                               {signal.score_delta > 0 
                                 ? `+${Math.round(signal.score_delta * 10) / 10} Risk ↑`
@@ -284,10 +284,10 @@ const SignalsTable = () => {
                         <TableCell className="text-right">
                           {signal.action_type === 'release' && (
                             <div className="space-y-1">
-                              <Button 
+                               <Button 
                                 variant="outline"
                                 size="sm"
-                                className="shadow-soft hover:shadow-dashboard transition-all duration-200 hover:scale-105 bg-purple-500/10 border-purple-500/20 text-purple-600 hover:bg-purple-500/20"
+                                className="shadow-soft hover:shadow-dashboard transition-all duration-200 hover:scale-105 bg-destructive/10 border-destructive/20 text-destructive hover:bg-destructive/20"
                                 onClick={() => {
                                   setSelectedPersonId(signal.person_id);
                                   setSelectedPersonName(signal.person);
@@ -308,10 +308,10 @@ const SignalsTable = () => {
                             </div>
                           )}
                           {signal.action_type === 'coach' && (
-                            <Button 
+                             <Button 
                               variant="outline"
                               size="sm"
-                              className="shadow-soft hover:shadow-dashboard transition-all duration-200 hover:scale-105 bg-blue-500/10 border-blue-500/20 text-blue-600 hover:bg-blue-500/20"
+                              className="shadow-soft hover:shadow-dashboard transition-all duration-200 hover:scale-105 bg-primary/10 border-primary/20 text-primary hover:bg-primary/20"
                               onClick={() => {
                                 setSelectedPersonId(signal.person_id);
                                 setSelectedPersonName(signal.person);
@@ -324,10 +324,10 @@ const SignalsTable = () => {
                             </Button>
                           )}
                           {signal.action_type === 'kudos' && (
-                            <Button 
+                             <Button 
                               variant="outline"
                               size="sm"
-                              className="shadow-soft hover:shadow-dashboard transition-all duration-200 hover:scale-105 bg-green-500/10 border-green-500/20 text-green-600 hover:bg-green-500/20"
+                              className="shadow-soft hover:shadow-dashboard transition-all duration-200 hover:scale-105 bg-success/10 border-success/20 text-success hover:bg-success/20"
                               onClick={() => recognizeAndCloseLoop.mutate({ personId: signal.person_id })}
                               disabled={recognizeAndCloseLoop.isPending}
                             >
@@ -372,17 +372,17 @@ const SignalsTable = () => {
                         <span className="text-muted-foreground font-mono">
                           {format(new Date(signal.ts), "MMM dd, HH:mm")}
                         </span>
-                        {signal.score_delta !== null && signal.score_delta !== 0 && (
+                         {signal.score_delta !== null && signal.score_delta !== 0 && (
                           <span className={`font-semibold ${
                             signal.score_delta < 0 
                               ? 'text-success' 
                               : signal.level === 'critical' 
                                 ? 'text-destructive'
                                 : signal.level === 'risk'
-                                  ? 'text-orange-600'
+                                  ? 'text-warning'
                                   : signal.level === 'warn'
-                                    ? 'text-orange-500'
-                                    : 'text-orange-500'
+                                    ? 'text-warning'
+                                    : 'text-warning'
                           }`}>
                             {signal.score_delta > 0 
                               ? `+${Math.round(signal.score_delta * 10) / 10} Risk ↑`
@@ -398,7 +398,7 @@ const SignalsTable = () => {
                             <Button 
                               variant="outline"
                               size="sm"
-                              className="w-full shadow-soft hover:shadow-dashboard transition-all duration-200 bg-purple-500/10 border-purple-500/20 text-purple-600 hover:bg-purple-500/20"
+                              className="w-full shadow-soft hover:shadow-dashboard transition-all duration-200 bg-destructive/10 border-destructive/20 text-destructive hover:bg-destructive/20"
                               onClick={() => {
                                 setSelectedPersonId(signal.person_id);
                                 setSelectedPersonName(signal.person);
@@ -422,7 +422,7 @@ const SignalsTable = () => {
                           <Button 
                             variant="outline"
                             size="sm"
-                            className="w-full shadow-soft hover:shadow-dashboard transition-all duration-200 bg-blue-500/10 border-blue-500/20 text-blue-600 hover:bg-blue-500/20"
+                            className="w-full shadow-soft hover:shadow-dashboard transition-all duration-200 bg-primary/10 border-primary/20 text-primary hover:bg-primary/20"
                             onClick={() => {
                               setSelectedPersonId(signal.person_id);
                               setSelectedPersonName(signal.person);
@@ -438,7 +438,7 @@ const SignalsTable = () => {
                           <Button 
                             variant="outline"
                             size="sm"
-                            className="w-full shadow-soft hover:shadow-dashboard transition-all duration-200 bg-green-500/10 border-green-500/20 text-green-600 hover:bg-green-500/20"
+                            className="w-full shadow-soft hover:shadow-dashboard transition-all duration-200 bg-success/10 border-success/20 text-success hover:bg-success/20"
                             onClick={() => recognizeAndCloseLoop.mutate({ personId: signal.person_id })}
                             disabled={recognizeAndCloseLoop.isPending}
                           >
