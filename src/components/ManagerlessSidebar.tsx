@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
+import { StandaloneAdaModal } from "@/components/StandaloneAdaModal";
 import { useState } from "react";
 
 const navigationItems = [
@@ -24,6 +25,7 @@ const ManagerlessSidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
+  const [autoCoachModalOpen, setAutoCoachModalOpen] = useState(false);
 
   return (
     <aside className="w-72 bg-gradient-subtle border-r border-border h-screen shadow-dashboard backdrop-blur-sm">
@@ -104,11 +106,11 @@ const ManagerlessSidebar = () => {
                 role="button"
                 tabIndex={0}
                 aria-label="Open Auto-Coach"
-                onClick={() => navigate('/workflows')}
+                onClick={() => setAutoCoachModalOpen(true)}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
-                    navigate('/workflows');
+                    setAutoCoachModalOpen(true);
                   }
                 }}
                 className="group p-3 bg-gradient-accent rounded-lg hover:shadow-soft transition-all duration-200 hover:scale-105 interactive-card cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
@@ -163,6 +165,11 @@ const ManagerlessSidebar = () => {
           </div>
         </div>
       </div>
+      
+      <StandaloneAdaModal 
+        open={autoCoachModalOpen} 
+        onOpenChange={setAutoCoachModalOpen}
+      />
     </aside>
   );
 };
