@@ -13,6 +13,11 @@ export interface RankedSignalData {
   action_type: 'release' | 'coach' | 'kudos' | 'none';
   action_disabled?: boolean;
   action_reason?: string;
+  start_date?: string;
+  tenure_ok: boolean;
+  evidence_ok: boolean;
+  coach_active: boolean;
+  evidence_count: number;
 }
 
 interface UseRankedSignalsProps {
@@ -27,7 +32,10 @@ export const useRankedSignals = ({ levelFilter, startDate, endDate, multipleLeve
   return useQuery({
     queryKey: ['ranked-signals', levelFilter, startDate, endDate, multipleLevels, sortMode],
     queryFn: async (): Promise<RankedSignalData[]> => {
-      // Fetch all signals with person data
+      // Date filter - default to last 30 days if no dates specified
+      const thirtyDaysAgo = startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      const endDateTime = endDate || new Date().toISOString();
+
       let query = supabase
         .from('signal')
         .select(`
@@ -39,75 +47,113 @@ export const useRankedSignals = ({ levelFilter, startDate, endDate, multipleLeve
           person_id,
           person!inner (
             name,
-            email
+            email,
+            start_date
           )
         `)
+        .gte('ts', thirtyDaysAgo)
+        .lte('ts', endDateTime)
         .order('ts', { ascending: false });
-
-      // Apply date range filters
-      if (startDate) {
-        query = query.gte('ts', startDate);
-      }
-      if (endDate) {
-        query = query.lte('ts', endDate);
-      }
 
       const { data, error } = await query;
 
-      //
-
       if (error) {
-        console.error('Error fetching signals:', error);
         throw error;
       }
 
-      // Transform signals to match SQL structure and check safeguards
-      const uniquePersonIds = [...new Set(data.map(signal => signal.person_id))];
+      if (!data) return [];
+
+      // Get all unique person IDs for batch fetching
+      const personIds = [...new Set(data.map(s => s.person_id))];
       
-      // Fetch safeguards for all unique persons in parallel
-      const safeguardsPromises = uniquePersonIds.map(async (personId) => {
-        try {
-          const { data: safeguardData } = await supabase.rpc('release_safeguards', {
-            target_person_id: personId
-          });
-          return { personId, safeguards: safeguardData?.[0] || null };
-        } catch (error) {
-          console.error(`Error fetching safeguards for person ${personId}:`, error);
-          return { personId, safeguards: null };
-        }
+      // Fetch evidence counts (performance events in last 14 days)
+      const evidencePromises = personIds.map(async (personId) => {
+        const { count } = await supabase
+          .from('performance_event')
+          .select('*', { count: 'exact', head: true })
+          .eq('person_id', personId)
+          .gte('ts', new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString());
+        return { personId, evidenceCount: count || 0 };
       });
 
-      const safeguardsResults = await Promise.all(safeguardsPromises);
-      const safeguardsMap = new Map(
-        safeguardsResults.map(result => [result.personId, result.safeguards])
+      // Check for active coaching plans
+      const coachingPromises = personIds.map(async (personId) => {
+        const { data } = await supabase
+          .from('coaching_plan')
+          .select('id')
+          .eq('person_id', personId)
+          .eq('status', 'active')
+          .limit(1);
+        return { personId, coachActive: (data?.length || 0) > 0 };
+      });
+
+      const [evidenceResults, coachingResults] = await Promise.all([
+        Promise.all(evidencePromises),
+        Promise.all(coachingPromises)
+      ]);
+
+      const evidenceMap = new Map(
+        evidenceResults.map(({ personId, evidenceCount }) => [personId, evidenceCount])
+      );
+      const coachingMap = new Map(
+        coachingResults.map(({ personId, coachActive }) => [personId, coachActive])
       );
 
-      const signals = (data || []).map(signal => {
-        const safeguards = safeguardsMap.get(signal.person_id);
-        const actionInfo = getActionTypeWithSafeguards(signal.level, safeguards);
+      // Transform raw data
+      const transformedData = data.map(signal => {
+        const person = signal.person as any;
+        const evidenceCount = evidenceMap.get(signal.person_id) || 0;
+        const coachActive = coachingMap.get(signal.person_id) || false;
         
+        // Calculate safeguard status
+        const startDate = person.start_date ? new Date(person.start_date) : null;
+        const tenureOk = startDate ? (Date.now() - startDate.getTime()) / (1000 * 60 * 60 * 24) >= 21 : false;
+        const evidenceOk = evidenceCount >= 3;
+        
+        // Determine action type by level
+        let action_type: 'release' | 'coach' | 'kudos' | 'none' = 'none';
+        if (['risk', 'critical'].includes(signal.level)) action_type = 'release';
+        else if (signal.level === 'warn') action_type = 'coach';
+        else if (signal.level === 'info') action_type = 'kudos';
+        
+        // Calculate disable reason for release actions
+        let action_disabled = false;
+        let action_reason = '';
+        
+        if (action_type === 'release') {
+          const reasons = [];
+          if (!tenureOk) reasons.push('Tenure < 21 days');
+          if (!evidenceOk) reasons.push('Insufficient evidence');
+          
+          action_disabled = reasons.length > 0;
+          action_reason = reasons.join(' AND ');
+        }
+
         return {
           id: signal.id,
           ts: signal.ts,
-          person_id: signal.person_id,
-          person: (signal.person as any).name,
-          email: (signal.person as any).email,
+          person: person.name,
+          email: person.email,
           level: signal.level,
           reason: signal.reason,
-          score_delta: signal.score_delta ?? 0,
-          action_type: actionInfo.type,
-          action_disabled: actionInfo.disabled,
-          action_reason: actionInfo.reason
+          score_delta: signal.score_delta,
+          person_id: signal.person_id,
+          action_type,
+          action_disabled,
+          action_reason,
+          start_date: person.start_date,
+          tenure_ok: tenureOk,
+          evidence_ok: evidenceOk,
+          coach_active: coachActive,
+          evidence_count: evidenceCount
         };
       });
 
-      // Group by person_id and level, then get most recent (ROW_NUMBER() OVER logic)
+      // Rank by person and level (keep most recent)
       const ranked = new Map<string, RankedSignalData>();
-      
-      signals.forEach(signal => {
+      transformedData.forEach((signal) => {
         const key = `${signal.person_id}_${signal.level}`;
         const existing = ranked.get(key);
-        
         if (!existing || new Date(signal.ts) > new Date(existing.ts)) {
           ranked.set(key, signal);
         }
@@ -145,38 +191,3 @@ export const useRankedSignals = ({ levelFilter, startDate, endDate, multipleLeve
     refetchInterval: 30000, // Refresh every 30 seconds
   });
 };
-
-function getActionTypeWithSafeguards(level: string, safeguards: any): { 
-  type: 'release' | 'coach' | 'kudos' | 'none', 
-  disabled: boolean, 
-  reason?: string 
-} {
-  if (level === 'critical' || level === 'risk') {
-    if (!safeguards) {
-      return { type: 'release', disabled: true, reason: 'Safeguard data unavailable' };
-    }
-    
-    const isDisabled = !safeguards.tenure_ok || !safeguards.data_ok;
-    let reason = '';
-    
-    if (!safeguards.tenure_ok && !safeguards.data_ok) {
-      reason = 'Tenure < 21 days AND insufficient evidence';
-    } else if (!safeguards.tenure_ok) {
-      reason = 'Tenure < 21 days';
-    } else if (!safeguards.data_ok) {
-      reason = 'Insufficient evidence (< 3 data points in 14 days)';
-    }
-    
-    return { type: 'release', disabled: isDisabled, reason };
-  }
-  
-  if (level === 'warn') {
-    return { type: 'coach', disabled: false };
-  }
-  
-  if (level === 'info') {
-    return { type: 'kudos', disabled: false };
-  }
-  
-  return { type: 'none', disabled: false };
-}

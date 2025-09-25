@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Filter, Loader2, UserCheck, AlertTriangle, Activity, MoreHorizontal, Bot, FileText, Eye, Clock as ClockIcon, CheckCircle2, CheckCircle } from "lucide-react";
+import { CalendarIcon, Filter, Loader2, UserCheck, AlertTriangle, Activity, MoreHorizontal, Bot, FileText, Eye, Clock as ClockIcon, CheckCircle2, CheckCircle, Users, Copy } from "lucide-react";
 import { useRankedSignals } from "@/hooks/useRankedSignals";
 import { useRecognizeAndCloseLoop } from "@/hooks/useRecognizeAndCloseLoop";
 import { ReleaseEvaluationModal } from "@/components/ReleaseEvaluationModal";
@@ -373,10 +373,21 @@ const SignalsTable = () => {
                         {signal.reason}
                       </div>
                       
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-muted-foreground font-mono">
-                          {format(new Date(signal.ts), "MMM dd, HH:mm")}
-                        </span>
+                       <div className="flex items-center justify-between text-xs">
+                         <div className="flex items-center gap-2">
+                           <span className="text-muted-foreground font-mono">
+                             {format(new Date(signal.ts), "MMM dd, HH:mm")}
+                           </span>
+                           <div className="flex items-center gap-1 text-muted-foreground">
+                             <Users className="w-3 h-3" />
+                             <span>{signal.evidence_count} events</span>
+                           </div>
+                           {signal.coach_active && (
+                             <Badge variant="outline" className="text-xs">
+                               Coaching
+                             </Badge>
+                           )}
+                         </div>
                          {signal.score_delta !== null && signal.score_delta !== 0 && (
                           <span className={`font-semibold ${
                             signal.score_delta < 0 
