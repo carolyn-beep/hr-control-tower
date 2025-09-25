@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { PersonDrawer } from "@/components/PersonDrawer";
+import { usePeopleOverview, PersonOverview } from "@/hooks/usePeopleOverview";
 import { 
   Search, 
   TrendingUp, 
@@ -18,118 +19,8 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 
-const people = [
-  {
-    id: 1,
-    name: "Sarah Chen",
-    role: "Senior Developer",
-    department: "Engineering",
-    riskScore: 85,
-    trend: "down",
-    status: "At Risk",
-    signals: 3,
-    coaching: "Active",
-    avatar: "/placeholder.svg",
-    metrics: {
-      productivity: 45,
-      engagement: 60,
-      collaboration: 70
-    },
-    lastActivity: "2 hours ago"
-  },
-  {
-    id: 2,
-    name: "Mike Rodriguez",
-    role: "Marketing Manager", 
-    department: "Marketing",
-    riskScore: 67,
-    trend: "stable",
-    status: "Monitoring",
-    signals: 1,
-    coaching: "Scheduled",
-    avatar: "/placeholder.svg",
-    metrics: {
-      productivity: 75,
-      engagement: 65,
-      collaboration: 80
-    },
-    lastActivity: "4 hours ago"
-  },
-  {
-    id: 3,
-    name: "Lisa Park",
-    role: "Sales Representative",
-    department: "Sales", 
-    riskScore: 92,
-    trend: "down",
-    status: "Critical",
-    signals: 4,
-    coaching: "Escalated",
-    avatar: "/placeholder.svg",
-    metrics: {
-      productivity: 30,
-      engagement: 40,
-      collaboration: 35
-    },
-    lastActivity: "6 hours ago"
-  },
-  {
-    id: 4,
-    name: "David Kim",
-    role: "Frontend Developer",
-    department: "Engineering",
-    riskScore: 34,
-    trend: "up", 
-    status: "Healthy",
-    signals: 0,
-    coaching: "None",
-    avatar: "/placeholder.svg",
-    metrics: {
-      productivity: 85,
-      engagement: 90,
-      collaboration: 75
-    },
-    lastActivity: "1 hour ago"
-  },
-  {
-    id: 5,
-    name: "Amanda Foster",
-    role: "UX Designer",
-    department: "Design",
-    riskScore: 78,
-    trend: "down",
-    status: "At Risk", 
-    signals: 2,
-    coaching: "Active",
-    avatar: "/placeholder.svg",
-    metrics: {
-      productivity: 50,
-      engagement: 55,
-      collaboration: 60
-    },
-    lastActivity: "3 hours ago"
-  },
-  {
-    id: 6,
-    name: "John Wilson",
-    role: "Product Manager",
-    department: "Product",
-    riskScore: 25,
-    trend: "up",
-    status: "Thriving",
-    signals: 0, 
-    coaching: "None",
-    avatar: "/placeholder.svg",
-    metrics: {
-      productivity: 95,
-      engagement: 85,
-      collaboration: 90
-    },
-    lastActivity: "30 minutes ago"
-  }
-];
-
 const People = () => {
+  const { data: people = [], isLoading, error } = usePeopleOverview();
   const [selectedPerson, setSelectedPerson] = useState<{
     id: string;
     name: string;
@@ -142,19 +33,86 @@ const People = () => {
   } | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const handleViewDetails = (person: {
-    id: string;
-    name: string;
-    email: string;
-    role: string;
-    department: string;
-    riskScore: number;
-    status: string;
-    avatar?: string;
-  }) => {
-    setSelectedPerson(person);
+  const handleViewDetails = (person: PersonOverview) => {
+    setSelectedPerson({
+      id: person.id,
+      name: person.name,
+      email: person.email,
+      role: person.role || 'Unknown',
+      department: person.department || 'Unknown',
+      riskScore: person.risk_score || 0,
+      status: person.status || 'Unknown',
+    });
     setDrawerOpen(true);
   };
+
+  const getStatusFromRisk = (riskScore: number) => {
+    if (riskScore >= 80) return 'Critical';
+    if (riskScore >= 60) return 'At Risk';
+    if (riskScore >= 40) return 'Monitoring';
+    if (riskScore >= 20) return 'Healthy';
+    return 'Thriving';
+  };
+
+  const getTrendFromRisk = (riskScore: number) => {
+    // Simulate trend based on risk score for now
+    if (riskScore >= 70) return 'down';
+    if (riskScore >= 40) return 'stable';
+    return 'up';
+  };
+
+  const getMetricsFromRisk = (riskScore: number) => {
+    // Simulate metrics based on risk score
+    const baseProductivity = Math.max(10, 100 - riskScore);
+    return {
+      productivity: baseProductivity + Math.random() * 20 - 10,
+      engagement: baseProductivity + Math.random() * 15 - 7.5,
+      collaboration: baseProductivity + Math.random() * 10 - 5,
+    };
+  };
+
+  const getSignalsCount = (riskScore: number) => {
+    if (riskScore >= 80) return Math.floor(Math.random() * 3) + 2; // 2-4 signals
+    if (riskScore >= 60) return Math.floor(Math.random() * 2) + 1; // 1-2 signals
+    if (riskScore >= 40) return Math.random() > 0.5 ? 1 : 0; // 0-1 signals
+    return 0;
+  };
+
+  const getCoachingStatus = (riskScore: number) => {
+    if (riskScore >= 80) return 'Escalated';
+    if (riskScore >= 60) return 'Active';
+    if (riskScore >= 40) return 'Scheduled';
+    return 'None';
+  };
+
+  // Calculate summary stats
+  const criticalCount = people.filter(p => (p.risk_score || 0) >= 80).length;
+  const atRiskCount = people.filter(p => (p.risk_score || 0) >= 60 && (p.risk_score || 0) < 80).length;
+  const monitoringCount = people.filter(p => (p.risk_score || 0) >= 40 && (p.risk_score || 0) < 60).length;
+  const thrivingCount = people.filter(p => (p.risk_score || 0) < 40).length;
+  const activeCoachingCount = people.filter(p => (p.risk_score || 0) >= 60).length;
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="flex">
+          <ManagerlessSidebar />
+          <div className="flex-1">
+            <ManagerlessHeader />
+            <main className="p-6">
+              <div className="text-center py-8">
+                <div className="animate-pulse">Loading people data...</div>
+              </div>
+            </main>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    console.error('People overview error:', error);
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -193,7 +151,7 @@ const People = () => {
               <Card className="bg-gradient-card border-border shadow-card">
                 <CardContent className="p-4">
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-destructive">2</p>
+                    <p className="text-2xl font-bold text-destructive">{criticalCount}</p>
                     <p className="text-sm text-muted-foreground">Critical Risk</p>
                   </div>
                 </CardContent>
@@ -201,7 +159,7 @@ const People = () => {
               <Card className="bg-gradient-card border-border shadow-card">
                 <CardContent className="p-4">
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-warning">2</p>
+                    <p className="text-2xl font-bold text-warning">{atRiskCount}</p>
                     <p className="text-sm text-muted-foreground">At Risk</p>
                   </div>
                 </CardContent>
@@ -209,7 +167,7 @@ const People = () => {
               <Card className="bg-gradient-card border-border shadow-card">
                 <CardContent className="p-4">
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-primary">1</p>
+                    <p className="text-2xl font-bold text-primary">{monitoringCount}</p>
                     <p className="text-sm text-muted-foreground">Monitoring</p>
                   </div>
                 </CardContent>
@@ -217,7 +175,7 @@ const People = () => {
               <Card className="bg-gradient-card border-border shadow-card">
                 <CardContent className="p-4">
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-success">1</p>
+                    <p className="text-2xl font-bold text-success">{thrivingCount}</p>
                     <p className="text-sm text-muted-foreground">Thriving</p>
                   </div>
                 </CardContent>
@@ -225,7 +183,7 @@ const People = () => {
               <Card className="bg-gradient-card border-border shadow-card">
                 <CardContent className="p-4">
                   <div className="text-center">
-                    <p className="text-2xl font-bold text-foreground">3</p>
+                    <p className="text-2xl font-bold text-foreground">{activeCoachingCount}</p>
                     <p className="text-sm text-muted-foreground">Active Coaching</p>
                   </div>
                 </CardContent>
@@ -234,28 +192,39 @@ const People = () => {
 
             {/* People Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {people.map((person, index) => (
-                <Card 
-                  key={person.id} 
-                  className={`bg-gradient-card border-border shadow-card hover:shadow-glow transition-all duration-500 hover-lift interactive-card animate-slide-up`}
-                  style={{ animationDelay: `${index * 100}ms` }}
-                >
+              {people.map((person, index) => {
+                const riskScore = person.risk_score || 0;
+                const status = getStatusFromRisk(riskScore);
+                const trend = getTrendFromRisk(riskScore);
+                const metrics = getMetricsFromRisk(riskScore);
+                const signals = getSignalsCount(riskScore);
+                const coaching = getCoachingStatus(riskScore);
+                const lastActivity = person.last_signal_ts 
+                  ? new Date(person.last_signal_ts).toLocaleString() 
+                  : 'No recent activity';
+
+                return (
+                  <Card 
+                    key={person.id} 
+                    className={`bg-gradient-card border-border shadow-card hover:shadow-glow transition-all duration-500 hover-lift interactive-card animate-slide-up`}
+                    style={{ animationDelay: `${index * 100}ms` }}
+                  >
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center space-x-3">
                         <div className="relative">
                           <Avatar className="h-14 w-14 ring-2 ring-border hover:ring-primary/50 transition-all duration-300">
-                            <AvatarImage src={person.avatar} alt={person.name} />
+                            <AvatarImage src="/placeholder.svg" alt={person.name} />
                             <AvatarFallback className="bg-gradient-primary text-primary-foreground font-semibold">
                               {person.name.split(' ').map(n => n[0]).join('')}
                             </AvatarFallback>
                           </Avatar>
                           {/* Status indicator */}
                           <div className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-card ${
-                            person.status === 'Critical' ? 'bg-destructive animate-pulse' :
-                            person.status === 'At Risk' ? 'bg-warning animate-pulse' :
-                            person.status === 'Monitoring' ? 'bg-primary animate-pulse' :
-                            person.status === 'Thriving' ? 'bg-success' :
+                            status === 'Critical' ? 'bg-destructive animate-pulse' :
+                            status === 'At Risk' ? 'bg-warning animate-pulse' :
+                            status === 'Monitoring' ? 'bg-primary animate-pulse' :
+                            status === 'Thriving' ? 'bg-success' :
                             'bg-muted-foreground'
                           }`}></div>
                         </div>
@@ -263,9 +232,9 @@ const People = () => {
                           <h3 className="font-semibold text-foreground text-base hover:text-primary transition-colors cursor-pointer">
                             {person.name}
                           </h3>
-                          <p className="text-sm text-muted-foreground font-medium">{person.role}</p>
+                          <p className="text-sm text-muted-foreground font-medium">{person.role || 'Unknown Role'}</p>
                           <p className="text-xs text-muted-foreground bg-accent px-2 py-1 rounded-full mt-1 inline-block">
-                            {person.department}
+                            {person.department || 'Unknown Dept'}
                           </p>
                         </div>
                       </div>
@@ -274,30 +243,30 @@ const People = () => {
                         <div className="flex items-center space-x-2 mb-2">
                           <span className="text-xs text-muted-foreground">Risk Score</span>
                           <div className={`px-3 py-1 rounded-full text-sm font-bold ${
-                            person.riskScore >= 80 ? 'bg-destructive/10 text-destructive' :
-                            person.riskScore >= 60 ? 'bg-warning/10 text-warning' :
-                            person.riskScore >= 40 ? 'bg-primary/10 text-primary' :
+                            riskScore >= 80 ? 'bg-destructive/10 text-destructive' :
+                            riskScore >= 60 ? 'bg-warning/10 text-warning' :
+                            riskScore >= 40 ? 'bg-primary/10 text-primary' :
                             'bg-success/10 text-success'
                           } animate-bounce-in`}>
-                            {person.riskScore}
+                            {Math.round(riskScore)}
                           </div>
-                          {person.trend === 'up' ? (
+                          {trend === 'up' ? (
                             <TrendingUp className="h-4 w-4 text-success animate-bounce" />
-                          ) : person.trend === 'down' ? (
+                          ) : trend === 'down' ? (
                             <TrendingDown className="h-4 w-4 text-destructive animate-bounce" />
                           ) : null}
                         </div>
                         <Badge 
                           variant="outline"
                           className={`text-xs font-semibold px-3 py-1 ${
-                            person.status === 'Critical' ? 'border-destructive text-destructive bg-destructive/5' :
-                            person.status === 'At Risk' ? 'border-warning text-warning bg-warning/5' :
-                            person.status === 'Monitoring' ? 'border-primary text-primary bg-primary/5' :
-                            person.status === 'Thriving' ? 'border-success text-success bg-success/5' :
+                            status === 'Critical' ? 'border-destructive text-destructive bg-destructive/5' :
+                            status === 'At Risk' ? 'border-warning text-warning bg-warning/5' :
+                            status === 'Monitoring' ? 'border-primary text-primary bg-primary/5' :
+                            status === 'Thriving' ? 'border-success text-success bg-success/5' :
                             'border-muted-foreground text-muted-foreground bg-muted/5'
                           } animate-fade-in`}
                         >
-                          {person.status}
+                          {status}
                         </Badge>
                       </div>
                     </div>
@@ -308,21 +277,21 @@ const People = () => {
                     <div className="space-y-2">
                       <div className="flex justify-between items-center">
                         <span className="text-xs text-muted-foreground">Productivity</span>
-                        <span className="text-xs font-medium">{person.metrics.productivity}%</span>
+                        <span className="text-xs font-medium">{Math.round(metrics.productivity)}%</span>
                       </div>
-                      <Progress value={person.metrics.productivity} className="h-2" />
+                      <Progress value={metrics.productivity} className="h-2" />
                       
                       <div className="flex justify-between items-center">
                         <span className="text-xs text-muted-foreground">Engagement</span>
-                        <span className="text-xs font-medium">{person.metrics.engagement}%</span>
+                        <span className="text-xs font-medium">{Math.round(metrics.engagement)}%</span>
                       </div>
-                      <Progress value={person.metrics.engagement} className="h-2" />
+                      <Progress value={metrics.engagement} className="h-2" />
                       
                       <div className="flex justify-between items-center">
                         <span className="text-xs text-muted-foreground">Collaboration</span>
-                        <span className="text-xs font-medium">{person.metrics.collaboration}%</span>
+                        <span className="text-xs font-medium">{Math.round(metrics.collaboration)}%</span>
                       </div>
-                      <Progress value={person.metrics.collaboration} className="h-2" />
+                      <Progress value={metrics.collaboration} className="h-2" />
                     </div>
 
                     {/* Status Items */}
@@ -330,23 +299,23 @@ const People = () => {
                       <div className="flex justify-between items-center">
                         <span className="text-xs text-muted-foreground">Active Signals:</span>
                         <div className="flex items-center space-x-1">
-                          {person.signals > 0 && <AlertTriangle className="h-3 w-3 text-warning" />}
-                          <span className="text-xs font-medium">{person.signals}</span>
+                          {signals > 0 && <AlertTriangle className="h-3 w-3 text-warning" />}
+                          <span className="text-xs font-medium">{signals}</span>
                         </div>
                       </div>
                       
                       <div className="flex justify-between items-center">
                         <span className="text-xs text-muted-foreground">AI Coaching:</span>
                         <div className="flex items-center space-x-1">
-                          {person.coaching === 'Active' && <Bot className="h-3 w-3 text-primary" />}
-                          {person.coaching === 'None' && <CheckCircle className="h-3 w-3 text-success" />}
-                          <span className="text-xs font-medium">{person.coaching}</span>
+                          {coaching === 'Active' && <Bot className="h-3 w-3 text-primary" />}
+                          {coaching === 'None' && <CheckCircle className="h-3 w-3 text-success" />}
+                          <span className="text-xs font-medium">{coaching}</span>
                         </div>
                       </div>
                       
                       <div className="flex justify-between items-center">
                         <span className="text-xs text-muted-foreground">Last Activity:</span>
-                        <span className="text-xs font-medium">{person.lastActivity}</span>
+                        <span className="text-xs font-medium">{lastActivity}</span>
                       </div>
                     </div>
 
@@ -356,35 +325,17 @@ const People = () => {
                         size="sm" 
                         variant="outline" 
                         className="flex-1 hover:bg-primary/5 hover:border-primary/20 hover:scale-105 transition-all duration-200"
-                        onClick={() => handleViewDetails({
-                          id: person.id.toString(),
-                          name: person.name,
-                          email: `${person.name.toLowerCase().replace(' ', '.')}@company.com`,
-                          role: person.role,
-                          department: person.department,
-                          riskScore: person.riskScore,
-                          status: person.status,
-                          avatar: person.avatar
-                        })}
+                        onClick={() => handleViewDetails(person)}
                       >
                         <Activity className="h-3 w-3 mr-1" />
                         View Details
                       </Button>
-                      {person.signals > 0 && (
+                      {signals > 0 && (
                         <Button 
                           size="sm" 
                           variant="gradient"
                           className="flex-1 shadow-glow hover:scale-105 transition-all duration-200"
-                          onClick={() => handleViewDetails({
-                            id: person.id.toString(),
-                            name: person.name,
-                            email: `${person.name.toLowerCase().replace(' ', '.')}@company.com`,
-                            role: person.role,
-                            department: person.department,
-                            riskScore: person.riskScore,
-                            status: person.status,
-                            avatar: person.avatar
-                          })}
+                          onClick={() => handleViewDetails(person)}
                         >
                           <Bot className="h-3 w-3 mr-1" />
                           Coach
@@ -393,7 +344,8 @@ const People = () => {
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+                );
+              })}
             </div>
           </main>
         </div>
