@@ -347,64 +347,48 @@ export default function SignalsTable() {
                             )}
                           </TableCell>
                           <TableCell className="text-right">
-                            {signal.action_type === 'release' && (
-                              <div className="space-y-1">
-                                <Button 
-                                  variant="outline"
-                                  size="sm"
-                                  className={`shadow-soft transition-all duration-200 ${
-                                    signal.tenure_ok && signal.evidence_ok
-                                      ? 'hover:shadow-dashboard hover:scale-105 bg-destructive/10 border-destructive/20 text-destructive hover:bg-destructive/20'
-                                      : 'opacity-50 cursor-not-allowed bg-muted/50 border-muted text-muted-foreground'
-                                  }`}
-                                  onClick={() => {
-                                    if (signal.tenure_ok && signal.evidence_ok) {
-                                      setSelectedPersonId(signal.person_id);
-                                      setSelectedPersonName(signal.person);
-                                      setSelectedSignalReason(signal.reason);
-                                      setModalOpen(true);
-                                    }
-                                  }}
-                                  disabled={!signal.tenure_ok || !signal.evidence_ok}
-                                >
-                                  <UserCheck className="h-4 w-4 mr-2" />
-                                  Evaluate for Release
-                                </Button>
-                                {signal.disable_reason && (
-                                  <div className="text-xs text-muted-foreground max-w-32 text-right">
-                                    {signal.disable_reason}
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                            {signal.action_type === 'coach' && (
+                            {/* Evaluate for Release - Purple - Critical/Risk levels */}
+                            {['risk', 'critical'].includes((signal.level || '').toLowerCase()) && (
                               <Button 
                                 variant="outline"
                                 size="sm"
-                                className={`shadow-soft transition-all duration-200 ${
-                                  !signal.coach_active
-                                    ? 'hover:shadow-dashboard hover:scale-105 bg-primary/10 border-primary/20 text-primary hover:bg-primary/20'
-                                    : 'opacity-50 cursor-not-allowed bg-muted/50 border-muted text-muted-foreground'
-                                }`}
+                                className="shadow-soft transition-all duration-200 hover:shadow-dashboard hover:scale-105 bg-purple-500/10 border-purple-500/20 text-purple-600 hover:bg-purple-500/20"
                                 onClick={() => {
-                                  if (!signal.coach_active) {
-                                    setSelectedPersonId(signal.person_id);
-                                    setSelectedPersonName(signal.person);
-                                    setSelectedSignalReason(signal.reason);
-                                    setAutoCoachOpen(true);
-                                  }
+                                  setSelectedPersonId(signal.person_id);
+                                  setSelectedPersonName(signal.person);
+                                  setSelectedSignalReason(signal.reason);
+                                  setModalOpen(true);
                                 }}
-                                disabled={signal.coach_active}
                               >
-                                <Bot className="h-4 w-4 mr-2" />
-                                {signal.coach_active ? 'Already Coaching' : 'Start Auto-Coach'}
+                                <UserCheck className="h-4 w-4 mr-2" />
+                                Evaluate for Release
                               </Button>
                             )}
-                            {signal.action_type === 'kudos' && (
+                            
+                            {/* Start Auto-Coach - Blue - Warn/Warning levels */}
+                            {['warn', 'warning'].includes((signal.level || '').toLowerCase()) && (
                               <Button 
                                 variant="outline"
                                 size="sm"
-                                className="shadow-soft hover:shadow-dashboard transition-all duration-200 hover:scale-105 bg-success/10 border-success/20 text-success hover:bg-success/20"
+                                className="shadow-soft transition-all duration-200 hover:shadow-dashboard hover:scale-105 bg-blue-500/10 border-blue-500/20 text-blue-600 hover:bg-blue-500/20"
+                                onClick={() => {
+                                  setSelectedPersonId(signal.person_id);
+                                  setSelectedPersonName(signal.person);
+                                  setSelectedSignalReason(signal.reason);
+                                  setAutoCoachOpen(true);
+                                }}
+                              >
+                                <Bot className="h-4 w-4 mr-2" />
+                                Start Auto-Coach
+                              </Button>
+                            )}
+                            
+                            {/* Recognize & Close Loop - Green - Info level */}
+                            {(signal.level || '').toLowerCase() === 'info' && (
+                              <Button 
+                                variant="outline"
+                                size="sm"
+                                className="shadow-soft hover:shadow-dashboard transition-all duration-200 hover:scale-105 bg-green-500/10 border-green-500/20 text-green-600 hover:bg-green-500/20"
                                 onClick={() => closeCoachingLoop.mutate({ personId: signal.person_id })}
                                 disabled={closeCoachingLoop.isPending}
                               >
@@ -476,64 +460,48 @@ export default function SignalsTable() {
                         </div>
                         
                         <div className="pt-2">
-                          {signal.action_type === 'release' && (
-                            <div className="space-y-2">
-                              <Button 
-                                variant="outline"
-                                size="sm"
-                                className={`w-full shadow-soft transition-all duration-200 ${
-                                  signal.tenure_ok && signal.evidence_ok
-                                    ? 'hover:shadow-dashboard bg-destructive/10 border-destructive/20 text-destructive hover:bg-destructive/20'
-                                    : 'opacity-50 cursor-not-allowed bg-muted/50 border-muted text-muted-foreground'
-                                }`}
-                                onClick={() => {
-                                  if (signal.tenure_ok && signal.evidence_ok) {
-                                    setSelectedPersonId(signal.person_id);
-                                    setSelectedPersonName(signal.person);
-                                    setSelectedSignalReason(signal.reason);
-                                    setModalOpen(true);
-                                  }
-                                }}
-                                disabled={!signal.tenure_ok || !signal.evidence_ok}
-                              >
-                                <UserCheck className="h-4 w-4 mr-2" />
-                                Evaluate for Release
-                              </Button>
-                              {signal.disable_reason && (
-                                <div className="text-xs text-muted-foreground text-center">
-                                  {signal.disable_reason}
-                                </div>
-                              )}
-                            </div>
-                          )}
-                          {signal.action_type === 'coach' && (
+                          {/* Evaluate for Release - Purple - Critical/Risk levels */}
+                          {['risk', 'critical'].includes((signal.level || '').toLowerCase()) && (
                             <Button 
                               variant="outline"
                               size="sm"
-                              className={`w-full shadow-soft transition-all duration-200 ${
-                                !signal.coach_active
-                                  ? 'hover:shadow-dashboard bg-primary/10 border-primary/20 text-primary hover:bg-primary/20'
-                                  : 'opacity-50 cursor-not-allowed bg-muted/50 border-muted text-muted-foreground'
-                              }`}
+                              className="w-full shadow-soft transition-all duration-200 hover:shadow-dashboard bg-purple-500/10 border-purple-500/20 text-purple-600 hover:bg-purple-500/20"
                               onClick={() => {
-                                if (!signal.coach_active) {
-                                  setSelectedPersonId(signal.person_id);
-                                  setSelectedPersonName(signal.person);
-                                  setSelectedSignalReason(signal.reason);
-                                  setAutoCoachOpen(true);
-                                }
+                                setSelectedPersonId(signal.person_id);
+                                setSelectedPersonName(signal.person);
+                                setSelectedSignalReason(signal.reason);
+                                setModalOpen(true);
                               }}
-                              disabled={signal.coach_active}
                             >
-                              <Bot className="h-4 w-4 mr-2" />
-                              {signal.coach_active ? 'Already Coaching' : 'Start Auto-Coach'}
+                              <UserCheck className="h-4 w-4 mr-2" />
+                              Evaluate for Release
                             </Button>
                           )}
-                          {signal.action_type === 'kudos' && (
+                          
+                          {/* Start Auto-Coach - Blue - Warn/Warning levels */}
+                          {['warn', 'warning'].includes((signal.level || '').toLowerCase()) && (
                             <Button 
                               variant="outline"
                               size="sm"
-                              className="w-full shadow-soft hover:shadow-dashboard transition-all duration-200 bg-success/10 border-success/20 text-success hover:bg-success/20"
+                              className="w-full shadow-soft transition-all duration-200 hover:shadow-dashboard bg-blue-500/10 border-blue-500/20 text-blue-600 hover:bg-blue-500/20"
+                              onClick={() => {
+                                setSelectedPersonId(signal.person_id);
+                                setSelectedPersonName(signal.person);
+                                setSelectedSignalReason(signal.reason);
+                                setAutoCoachOpen(true);
+                              }}
+                            >
+                              <Bot className="h-4 w-4 mr-2" />
+                              Start Auto-Coach
+                            </Button>
+                          )}
+                          
+                          {/* Recognize & Close Loop - Green - Info level */}
+                          {(signal.level || '').toLowerCase() === 'info' && (
+                            <Button 
+                              variant="outline"
+                              size="sm"
+                              className="w-full shadow-soft hover:shadow-dashboard transition-all duration-200 bg-green-500/10 border-green-500/20 text-green-600 hover:bg-green-500/20"
                               onClick={() => closeCoachingLoop.mutate({ personId: signal.person_id })}
                               disabled={closeCoachingLoop.isPending}
                             >
