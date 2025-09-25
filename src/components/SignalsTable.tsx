@@ -348,12 +348,15 @@ export default function SignalsTable() {
                             )}
                           </TableCell>
                           <TableCell className="text-right">
+                            {/* Add debug info temporarily */}
+                            <div className="text-xs text-muted-foreground mb-1">Level: {signal.level}</div>
+                            
                             {/* Conditional buttons based on level */}
                             {['risk', 'critical'].includes((signal.level || '').toLowerCase()) ? (
                               <Button 
                                 variant="outline"
                                 size="sm"
-                                className="shadow-soft transition-all duration-200 hover:shadow-dashboard hover:scale-105 bg-blue-600 text-white border-blue-600 hover:bg-blue-700"
+                                className="shadow-soft transition-all duration-200 hover:shadow-dashboard hover:scale-105 bg-destructive/10 border-destructive/20 text-destructive hover:bg-destructive/20"
                                 onClick={() => {
                                   setSelectedSignalId(signal.id);
                                   setSelectedPersonId(signal.person_id);
@@ -369,7 +372,7 @@ export default function SignalsTable() {
                               <Button 
                                 variant="outline"
                                 size="sm"
-                                className="shadow-soft transition-all duration-200 hover:shadow-dashboard hover:scale-105 bg-primary/10 border-primary/20 text-primary hover:bg-primary/20"
+                                className="shadow-soft transition-all duration-200 hover:shadow-dashboard hover:scale-105 bg-warning/10 border-warning/20 text-warning hover:bg-warning/20"
                                 onClick={() => {
                                   setSelectedPersonId(signal.person_id);
                                   setSelectedPersonName(signal.person);
@@ -395,17 +398,10 @@ export default function SignalsTable() {
                               <Button 
                                 variant="outline"
                                 size="sm"
-                                className="shadow-soft transition-all duration-200 hover:shadow-dashboard hover:scale-105 bg-blue-600 text-white border-blue-600 hover:bg-blue-700"
-                                onClick={() => {
-                                  setSelectedSignalId(signal.id);
-                                  setSelectedPersonId(signal.person_id);
-                                  setSelectedPersonName(signal.person);
-                                  setSelectedSignalReason(signal.reason);
-                                  setModalOpen(true);
-                                }}
+                                className="shadow-soft transition-all duration-200 hover:shadow-dashboard hover:scale-105 bg-muted/50 border-muted text-muted-foreground"
+                                disabled
                               >
-                                <UserCheck className="h-4 w-4 mr-2" />
-                                Evaluate for Release
+                                Unknown Level: {signal.level}
                               </Button>
                             )}
                           </TableCell>
