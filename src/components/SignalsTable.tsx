@@ -8,520 +8,599 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon, Filter, Loader2, UserCheck, AlertTriangle, Activity, MoreHorizontal, Bot, FileText, Eye, Clock as ClockIcon, CheckCircle2, CheckCircle, Users, Copy } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { CalendarIcon, Filter, Loader2, UserCheck, AlertTriangle, Activity, Bot, CheckCircle, Users, Copy, Eye, X } from "lucide-react";
 import { useRankedSignals } from "@/hooks/useRankedSignals";
 import { useRecognizeAndCloseLoop } from "@/hooks/useRecognizeAndCloseLoop";
+import { useCloseCoachingLoop } from "@/hooks/useCloseCoachingLoop";
 import { ReleaseEvaluationModal } from "@/components/ReleaseEvaluationModal";
 import { AutoCoachModal } from "@/components/AutoCoachModal";
 import { EvidenceModal } from "@/components/EvidenceModal";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { useSearchParams, useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
-const SignalsTable = () => {
-  const [searchParams] = useSearchParams();
-  
-  // Get initial filters from URL parameters
+export default function SignalsTable() {
+  // Get initial filter values from URL
   const getInitialLevelFilter = () => {
-    const levelParam = searchParams.get('level');
-    if (levelParam) {
-      const levels = levelParam.split(',').map((l) => l.trim());
-      if (levels.length === 1) return levels[0];
-      if (levels.includes('risk') && levels.includes('critical')) return 'risk_critical';
-    }
-    return 'all';
+    const params = new URLSearchParams(window.location.search);
+    return params.get('level') || 'all';
   };
 
-  const [levelFilter, setLevelFilter] = useState<string>(getInitialLevelFilter());
   const getInitialSortMode = () => {
-    const sortParam = searchParams.get('sort');
-    if (sortParam === 'ts_desc' || sortParam === 'ts_asc' || sortParam === 'priority') return sortParam as any;
-    return 'priority';
+    const params = new URLSearchParams(window.location.search);
+    return (params.get('sort') as 'ts_desc' | 'ts_asc' | 'priority') || 'priority';
   };
-  const [sortMode, setSortMode] = useState<'ts_desc' | 'ts_asc' | 'priority'>(getInitialSortMode());
-  const [startDate, setStartDate] = useState<Date>();
-  const [endDate, setEndDate] = useState<Date>();
-  const [selectedPersonId, setSelectedPersonId] = useState<string>('');
-  const [selectedPersonName, setSelectedPersonName] = useState<string>('');
-  const [selectedSignalReason, setSelectedSignalReason] = useState<string>('');
-  const [modalOpen, setModalOpen] = useState(false);
-  const [autoCoachOpen, setAutoCoachOpen] = useState(false);
-  const [evidenceOpen, setEvidenceOpen] = useState(false);
-  const [evidenceData, setEvidenceData] = useState<any>(null);
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  // Modify levelFilter for API call
-  const getApiLevelFilter = () => {
-    if (levelFilter === 'risk_critical') {
-      return 'risk'; // We'll handle multiple levels in the hook
-    }
+
+  const getApiLevelFilter = (levelFilter: string) => {
+    if (levelFilter === 'all') return undefined;
+    if (levelFilter === 'risk+critical') return ['risk', 'critical'];
     return levelFilter;
   };
 
-  const multipleLevelsParam = levelFilter === 'risk_critical' ? ['risk', 'critical'] : undefined;
+  // State management
+  const [modalOpen, setModalOpen] = useState(false);
+  const [autoCoachOpen, setAutoCoachOpen] = useState(false);
+  const [evidenceOpen, setEvidenceOpen] = useState(false);
+  const [selectedPersonId, setSelectedPersonId] = useState("");
+  const [selectedPersonName, setSelectedPersonName] = useState("");
+  const [selectedSignalReason, setSelectedSignalReason] = useState("");
+  const [evidenceData, setEvidenceData] = useState<any[]>([]);
 
+  // Filter states
+  const [levelFilter, setLevelFilter] = useState<string>(() => getInitialLevelFilter());
+  const [startDate, setStartDate] = useState<Date>();
+  const [endDate, setEndDate] = useState<Date>();
+  const [sortMode, setSortMode] = useState<'ts_desc' | 'ts_asc' | 'priority'>(() => getInitialSortMode());
+  const [searchTerm, setSearchTerm] = useState("");
+  const [onlyActionable, setOnlyActionable] = useState(false);
+
+  // Data fetching
+  const apiLevelFilter = getApiLevelFilter(levelFilter);
   const { data: signals, isLoading, error } = useRankedSignals({
-    levelFilter: getApiLevelFilter(),
+    levelFilter: Array.isArray(apiLevelFilter) ? undefined : apiLevelFilter,
+    multipleLevels: Array.isArray(apiLevelFilter) ? apiLevelFilter : undefined,
     startDate: startDate?.toISOString(),
     endDate: endDate?.toISOString(),
-    multipleLevels: multipleLevelsParam,
-    sortMode,
+    sortMode
   });
 
+  // Hooks
+  const { toast } = useToast();
   const recognizeAndCloseLoop = useRecognizeAndCloseLoop();
+  const closeCoachingLoop = useCloseCoachingLoop();
 
-  const getBadgeVariant = (level: string) => {
-    switch (level.toLowerCase()) {
-      case 'critical':
-        return 'destructive';
-      case 'risk':
-        return 'default';
-      case 'warn':
-        return 'secondary';
-      case 'info':
-        return 'outline';
-      default:
-        return 'outline';
+  // Filter signals based on search, level, and actionable toggle
+  const filteredSignals = signals?.filter(signal => {
+    const matchesSearch = searchTerm === "" || 
+      signal.person.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      signal.reason.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      signal.email.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const isActionable = onlyActionable ? (
+      (signal.action_type === 'release' && signal.tenure_ok && signal.evidence_ok) ||
+      (signal.action_type === 'coach' && !signal.coach_active) ||
+      (signal.action_type === 'kudos')
+    ) : true;
+    
+    return matchesSearch && isActionable;
+  }) || [];
+
+  const levelFilters = [
+    { key: 'all', label: 'All', color: 'bg-muted text-muted-foreground' },
+    { key: 'critical', label: 'Critical', color: 'bg-destructive/10 text-destructive border-destructive/20' },
+    { key: 'risk', label: 'Risk', color: 'bg-warning/10 text-warning border-warning/20' },
+    { key: 'warn', label: 'Warn', color: 'bg-warning/10 text-warning border-warning/20' },
+    { key: 'info', label: 'Recovered', color: 'bg-success/10 text-success border-success/20' }
+  ];
+
+  function getBadgeVariant(level: string): "default" | "secondary" | "destructive" | "outline" {
+    switch (level) {
+      case 'critical': return 'destructive';
+      case 'risk': return 'destructive';
+      case 'warn': return 'default';
+      case 'info': return 'secondary';
+      default: return 'outline';
     }
+  }
+
+  function getBadgeColor(level: string): string {
+    switch (level) {
+      case 'critical': return 'bg-destructive/10 text-destructive border-destructive/20';
+      case 'risk': return 'bg-warning/10 text-warning border-warning/20';
+      case 'warn': return 'bg-warning/10 text-warning border-warning/20';
+      case 'info': return 'bg-success/10 text-success border-success/20';
+      default: return 'bg-muted text-muted-foreground border-muted';
+    }
+  }
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      toast({
+        description: "Reason copied to clipboard",
+        duration: 2000,
+      });
+    });
   };
 
-  const getBadgeColor = (level: string) => {
-    switch (level.toLowerCase()) {
-      case 'critical':
-        return 'border-destructive text-destructive';
-      case 'risk':
-        return 'border-warning text-warning';
-      case 'warn':
-        return 'border-primary text-primary';
-      case 'info':
-        return 'border-muted-foreground text-muted-foreground';
-      default:
-        return 'border-muted-foreground text-muted-foreground';
+  // Update URL when filters change
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    
+    if (levelFilter && levelFilter !== 'all') {
+      params.set('level', levelFilter);
+    } else {
+      params.delete('level');
     }
-  };
+    
+    if (sortMode !== 'priority') {
+      params.set('sort', sortMode);
+    } else {
+      params.delete('sort');
+    }
+    
+    const newUrl = params.toString() ? `${window.location.pathname}?${params}` : window.location.pathname;
+    window.history.replaceState({}, '', newUrl);
+  }, [levelFilter, sortMode]);
+
+  if (error) {
+    return (
+      <Card className="p-6">
+        <div className="text-center space-y-4">
+          <AlertTriangle className="h-12 w-12 text-destructive mx-auto" />
+          <div>
+            <h3 className="text-lg font-semibold">Error Loading Signals</h3>
+            <p className="text-muted-foreground">Failed to fetch signal data. Please try again.</p>
+          </div>
+        </div>
+      </Card>
+    );
+  }
 
   return (
-    <div className="space-y-6">
-      {/* Filters */}
-      <Card className="bg-gradient-card border-border shadow-card">
-        <CardContent className="p-3 sm:p-4">
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-            <Select value={levelFilter} onValueChange={setLevelFilter}>
-              <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder="Signal Level" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Levels</SelectItem>
-                <SelectItem value="critical">Critical</SelectItem>
-                <SelectItem value="risk">Risk</SelectItem>
-                <SelectItem value="risk_critical">Risk + Critical</SelectItem>
-                <SelectItem value="warn">Warning</SelectItem>
-                <SelectItem value="info">Info</SelectItem>
-              </SelectContent>
-            </Select>
-
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full sm:w-48 justify-start text-left font-normal",
-                    !startDate && "text-muted-foreground"
-                  )}
+    <TooltipProvider>
+      <div className="space-y-6">
+        {/* Filters Card */}
+        <Card className="bg-gradient-card border-border shadow-card">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-xl font-semibold flex items-center gap-2">
+              <Activity className="h-5 w-5 text-primary" />
+              AI Signal Detection
+            </CardTitle>
+            
+            {/* Filter chips and actionable toggle */}
+            <div className="flex flex-wrap items-center gap-2 pt-2">
+              {levelFilters.map(filter => (
+                <button
+                  key={filter.key}
+                  onClick={() => setLevelFilter(filter.key)}
+                  className={`px-3 py-1 rounded-full text-xs font-medium border transition-all ${
+                    levelFilter === filter.key 
+                      ? filter.color 
+                      : 'bg-transparent text-muted-foreground border-border hover:bg-accent'
+                  }`}
                 >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {startDate ? format(startDate, "MMM dd") : "Start date"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={startDate}
-                  onSelect={setStartDate}
-                  initialFocus
-                  className={cn("p-3 pointer-events-auto")}
+                  {filter.label}
+                </button>
+              ))}
+              <div className="ml-4 flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="actionable-toggle"
+                  checked={onlyActionable}
+                  onChange={(e) => setOnlyActionable(e.target.checked)}
+                  className="rounded border-border"
                 />
-              </PopoverContent>
-            </Popover>
-
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "w-full sm:w-48 justify-start text-left font-normal",
-                    !endDate && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {endDate ? format(endDate, "MMM dd") : "End date"}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={endDate}
-                  onSelect={setEndDate}
-                  initialFocus
-                  className={cn("p-3 pointer-events-auto")}
-                />
-              </PopoverContent>
-            </Popover>
-
-            <Button 
-              variant="outline" 
-              size="sm"
-              className="w-full sm:w-auto"
-              onClick={() => {
-                setLevelFilter('all');
-                setStartDate(undefined);
-                setEndDate(undefined);
-              }}
-            >
-              Clear Filters
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Signals Table */}
-      <Card className="bg-gradient-card border-border shadow-card">
-        <CardHeader>
-          <CardTitle className="text-xl font-semibold text-foreground">Signals</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="flex flex-col items-center justify-center py-12 space-y-4">
-              <div className="relative">
-                <div className="w-12 h-12 border-4 border-primary/20 rounded-full animate-spin"></div>
-                <div className="absolute top-0 left-0 w-12 h-12 border-t-4 border-primary rounded-full animate-spin"></div>
-              </div>
-              <div className="text-center space-y-2">
-                <p className="text-lg font-medium text-foreground animate-pulse">Loading signals...</p>
-                <p className="text-sm text-muted-foreground">Analyzing risk patterns</p>
+                <label htmlFor="actionable-toggle" className="text-sm text-muted-foreground cursor-pointer">
+                  Only actionable
+                </label>
               </div>
             </div>
-          ) : error ? (
-            <div className="flex flex-col items-center justify-center py-12 space-y-4 animate-fade-in">
-              <div className="p-4 bg-destructive/10 rounded-full">
-                <AlertTriangle className="h-8 w-8 text-destructive" />
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1">
+                <Input
+                  placeholder="Search by person name, reason, or email..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full"
+                />
               </div>
-              <div className="text-center space-y-2">
-                <p className="text-lg font-semibold text-destructive">Failed to load signals</p>
-                <p className="text-sm text-muted-foreground">Please check your connection and try again</p>
-                <Button 
-                  variant="outline" 
-                  onClick={() => window.location.reload()} 
-                  className="mt-4 hover:bg-destructive/10"
-                >
-                  Try Again
-                </Button>
-              </div>
+
+              <Select value={sortMode} onValueChange={(value: 'ts_desc' | 'ts_asc' | 'priority') => setSortMode(value)}>
+                <SelectTrigger className="w-full sm:w-48">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="priority">Priority</SelectItem>
+                  <SelectItem value="ts_desc">Newest first</SelectItem>
+                  <SelectItem value="ts_asc">Oldest first</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-full sm:w-auto justify-start">
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {startDate ? format(startDate, "MMM dd") : "Start date"}
+                    {startDate && endDate && " - "}
+                    {endDate ? format(endDate, "MMM dd") : ""}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="end">
+                  <div className="p-3 space-y-2">
+                    <div className="font-medium text-sm">Start Date</div>
+                    <Calendar
+                      mode="single"
+                      selected={startDate}
+                      onSelect={setStartDate}
+                      className="rounded-md border"
+                    />
+                    <div className="font-medium text-sm pt-2">End Date</div>
+                    <Calendar
+                      mode="single"
+                      selected={endDate}
+                      onSelect={setEndDate}
+                      className="rounded-md border"
+                    />
+                  </div>
+                </PopoverContent>
+              </Popover>
+
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="w-full sm:w-auto"
+                onClick={() => {
+                  setLevelFilter('all');
+                  setStartDate(undefined);
+                  setEndDate(undefined);
+                  setOnlyActionable(false);
+                }}
+              >
+                Clear Filters
+              </Button>
             </div>
-          ) : signals && signals.length > 0 ? (
-            <div className="space-y-4">
-              {/* Desktop Table View */}
-              <div className="hidden lg:block overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Timestamp</TableHead>
-                      <TableHead>Person</TableHead>
-                      <TableHead>Level</TableHead>
-                      <TableHead>Reason</TableHead>
-                      <TableHead className="text-right">Score Delta</TableHead>
-                      <TableHead className="text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {signals.map((signal, index) => (
-                      <TableRow 
-                        key={signal.id} 
-                        className="hover:bg-accent/50 transition-colors duration-200 animate-fade-in hover-lift"
-                        style={{ animationDelay: `${index * 50}ms` }}
-                      >
-                        <TableCell className="font-mono text-sm">
-                          {format(new Date(signal.ts), "MMM dd, yyyy HH:mm")}
-                        </TableCell>
-                        <TableCell>
-                          <div>
-                            <div className="font-medium">{signal.person}</div>
-                            <div className="text-sm text-muted-foreground">{signal.email}</div>
+          </CardContent>
+        </Card>
+
+        {/* Signals Table */}
+        <Card className="bg-gradient-card border-border shadow-card">
+          <CardContent className="p-0">
+            {isLoading ? (
+              <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                <div className="relative">
+                  <div className="w-12 h-12 border-4 border-primary/20 rounded-full animate-spin"></div>
+                  <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin absolute top-0 left-0"></div>
+                </div>
+                <div className="text-center space-y-2">
+                  <h3 className="text-lg font-semibold text-foreground">Processing signals...</h3>
+                  <p className="text-sm text-muted-foreground">AI is analyzing the latest performance data</p>
+                </div>
+              </div>
+            ) : filteredSignals && filteredSignals.length > 0 ? (
+              <div>
+                {/* Desktop Table View */}
+                <div className="hidden lg:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow className="bg-muted/50">
+                        <TableHead className="font-semibold text-foreground">Person</TableHead>
+                        <TableHead className="font-semibold text-foreground">Level</TableHead>
+                        <TableHead className="font-semibold text-foreground">Reason</TableHead>
+                        <TableHead className="font-semibold text-foreground">Time</TableHead>
+                        <TableHead className="font-semibold text-foreground text-right">Risk Impact</TableHead>
+                        <TableHead className="font-semibold text-foreground text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredSignals.map((signal) => (
+                        <TableRow key={signal.id} className="hover:bg-muted/30 transition-colors">
+                          <TableCell>
+                            <div>
+                              <div className="font-medium">{signal.person}</div>
+                              <div className="text-sm text-muted-foreground">{signal.email}</div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge 
+                              variant="outline" 
+                              className={getBadgeColor(signal.level)}
+                            >
+                              {signal.level}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="max-w-md">
+                            <div className="flex items-center gap-2">
+                              <div className="truncate" title={signal.reason}>
+                                {signal.reason}
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => copyToClipboard(signal.reason)}
+                                className="p-1 h-auto text-muted-foreground hover:text-foreground"
+                              >
+                                <Copy className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                          <TableCell className="font-mono text-sm text-muted-foreground">
+                            {format(new Date(signal.ts), "MMM dd, HH:mm")}
+                          </TableCell>
+                          <TableCell className="text-right font-mono">
+                            {signal.score_delta !== null && signal.score_delta !== 0 ? (
+                              <span className={`text-sm font-semibold ${
+                                signal.score_delta < 0 
+                                  ? 'text-success' 
+                                  : signal.level === 'critical' || signal.level === 'risk'
+                                    ? 'text-destructive'
+                                    : 'text-warning'
+                              }`}>
+                                {signal.score_delta > 0 
+                                  ? `+${Math.round(signal.score_delta * 10) / 10} Risk ↑`
+                                  : `–${Math.abs(Math.round(signal.score_delta * 10) / 10)} Risk ↓`
+                                }
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {signal.action_type === 'release' && (
+                              <div className="space-y-1">
+                                <Button 
+                                  variant="outline"
+                                  size="sm"
+                                  className={`shadow-soft transition-all duration-200 ${
+                                    signal.tenure_ok && signal.evidence_ok
+                                      ? 'hover:shadow-dashboard hover:scale-105 bg-destructive/10 border-destructive/20 text-destructive hover:bg-destructive/20'
+                                      : 'opacity-50 cursor-not-allowed bg-muted/50 border-muted text-muted-foreground'
+                                  }`}
+                                  onClick={() => {
+                                    if (signal.tenure_ok && signal.evidence_ok) {
+                                      setSelectedPersonId(signal.person_id);
+                                      setSelectedPersonName(signal.person);
+                                      setSelectedSignalReason(signal.reason);
+                                      setModalOpen(true);
+                                    }
+                                  }}
+                                  disabled={!signal.tenure_ok || !signal.evidence_ok}
+                                >
+                                  <UserCheck className="h-4 w-4 mr-2" />
+                                  Evaluate for Release
+                                </Button>
+                                {signal.disable_reason && (
+                                  <div className="text-xs text-muted-foreground max-w-32 text-right">
+                                    {signal.disable_reason}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                            {signal.action_type === 'coach' && (
+                              <Button 
+                                variant="outline"
+                                size="sm"
+                                className={`shadow-soft transition-all duration-200 ${
+                                  !signal.coach_active
+                                    ? 'hover:shadow-dashboard hover:scale-105 bg-primary/10 border-primary/20 text-primary hover:bg-primary/20'
+                                    : 'opacity-50 cursor-not-allowed bg-muted/50 border-muted text-muted-foreground'
+                                }`}
+                                onClick={() => {
+                                  if (!signal.coach_active) {
+                                    setSelectedPersonId(signal.person_id);
+                                    setSelectedPersonName(signal.person);
+                                    setSelectedSignalReason(signal.reason);
+                                    setAutoCoachOpen(true);
+                                  }
+                                }}
+                                disabled={signal.coach_active}
+                              >
+                                <Bot className="h-4 w-4 mr-2" />
+                                {signal.coach_active ? 'Already Coaching' : 'Start Auto-Coach'}
+                              </Button>
+                            )}
+                            {signal.action_type === 'kudos' && (
+                              <Button 
+                                variant="outline"
+                                size="sm"
+                                className="shadow-soft hover:shadow-dashboard transition-all duration-200 hover:scale-105 bg-success/10 border-success/20 text-success hover:bg-success/20"
+                                onClick={() => closeCoachingLoop.mutate({ personId: signal.person_id })}
+                                disabled={closeCoachingLoop.isPending}
+                              >
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                {closeCoachingLoop.isPending ? 'Processing...' : 'Recognize & Close Loop'}
+                              </Button>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {/* Mobile Card View */}
+                <div className="lg:hidden p-4 space-y-4">
+                  {filteredSignals.map((signal) => (
+                    <Card 
+                      key={signal.id} 
+                      className="bg-card border-border hover:shadow-soft transition-shadow cursor-pointer"
+                    >
+                      <CardContent className="p-4 space-y-3">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium text-sm truncate">{signal.person}</div>
+                            <div className="text-xs text-muted-foreground truncate">{signal.email}</div>
                           </div>
-                        </TableCell>
-                        <TableCell>
                           <Badge 
                             variant="outline" 
-                            className={getBadgeColor(signal.level)}
+                            className={`${getBadgeColor(signal.level)} text-xs`}
                           >
                             {signal.level}
                           </Badge>
-                        </TableCell>
-                        <TableCell className="max-w-md">
-                          <div className="truncate" title={signal.reason}>
-                            {signal.reason}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right font-mono">
-                          {signal.score_delta !== null && signal.score_delta !== 0 ? (
-                           <span className={`text-sm font-semibold ${
-                              signal.score_delta < 0 
-                                ? 'text-success' 
-                                : signal.level === 'critical' 
-                                  ? 'text-destructive'
-                                  : signal.level === 'risk'
-                                    ? 'text-warning'
-                                    : signal.level === 'warn'
-                                      ? 'text-warning'
-                                      : 'text-warning'
-                            }`}>
-                              {signal.score_delta > 0 
-                                ? `+${Math.round(signal.score_delta * 10) / 10} Risk ↑`
-                                : `–${Math.abs(Math.round(signal.score_delta * 10) / 10)} Risk ↓`
-                              }
+                        </div>
+                        
+                        <div className="text-sm text-foreground line-clamp-2" title={signal.reason}>
+                          {signal.reason}
+                        </div>
+                        
+                        <div className="flex items-center justify-between text-xs">
+                          <div className="flex items-center gap-2">
+                            <span className="text-muted-foreground font-mono">
+                              {format(new Date(signal.ts), "MMM dd, HH:mm")}
                             </span>
-                          ) : (
-                            <span className="text-muted-foreground">—</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
+                            <div className="flex items-center gap-1 text-muted-foreground">
+                              <Users className="w-3 h-3" />
+                              <span>{signal.evidence_count} events</span>
+                            </div>
+                            {signal.coach_active && (
+                              <Badge variant="outline" className="text-xs">
+                                Coaching
+                              </Badge>
+                            )}
+                          </div>
+                          {signal.score_delta !== null && signal.score_delta !== 0 && (
+                           <span className={`font-semibold ${
+                             signal.score_delta < 0 
+                               ? 'text-success' 
+                               : signal.level === 'critical' || signal.level === 'risk'
+                                 ? 'text-destructive'
+                                 : 'text-warning'
+                           }`}>
+                             {signal.score_delta > 0 
+                               ? `+${Math.round(signal.score_delta * 10) / 10} Risk ↑`
+                               : `–${Math.abs(Math.round(signal.score_delta * 10) / 10)} Risk ↓`
+                             }
+                           </span>
+                         )}
+                        </div>
+                        
+                        <div className="pt-2">
                           {signal.action_type === 'release' && (
-                            <div className="space-y-1">
-                               <Button 
+                            <div className="space-y-2">
+                              <Button 
                                 variant="outline"
                                 size="sm"
-                                className="shadow-soft hover:shadow-dashboard transition-all duration-200 hover:scale-105 bg-destructive/10 border-destructive/20 text-destructive hover:bg-destructive/20"
+                                className={`w-full shadow-soft transition-all duration-200 ${
+                                  signal.tenure_ok && signal.evidence_ok
+                                    ? 'hover:shadow-dashboard bg-destructive/10 border-destructive/20 text-destructive hover:bg-destructive/20'
+                                    : 'opacity-50 cursor-not-allowed bg-muted/50 border-muted text-muted-foreground'
+                                }`}
                                 onClick={() => {
-                                  setSelectedPersonId(signal.person_id);
-                                  setSelectedPersonName(signal.person);
-                                  setSelectedSignalReason(signal.reason);
-                                  setModalOpen(true);
+                                  if (signal.tenure_ok && signal.evidence_ok) {
+                                    setSelectedPersonId(signal.person_id);
+                                    setSelectedPersonName(signal.person);
+                                    setSelectedSignalReason(signal.reason);
+                                    setModalOpen(true);
+                                  }
                                 }}
-                                disabled={signal.action_disabled}
-                                title={signal.action_disabled ? signal.action_reason : undefined}
+                                disabled={!signal.tenure_ok || !signal.evidence_ok}
                               >
                                 <UserCheck className="h-4 w-4 mr-2" />
                                 Evaluate for Release
                               </Button>
-                              {signal.action_disabled && signal.action_reason && (
-                                <div className="text-xs text-muted-foreground max-w-32 text-right">
-                                  {signal.action_reason}
+                              {signal.disable_reason && (
+                                <div className="text-xs text-muted-foreground text-center">
+                                  {signal.disable_reason}
                                 </div>
                               )}
                             </div>
                           )}
                           {signal.action_type === 'coach' && (
-                             <Button 
-                              variant="outline"
-                              size="sm"
-                              className="shadow-soft hover:shadow-dashboard transition-all duration-200 hover:scale-105 bg-primary/10 border-primary/20 text-primary hover:bg-primary/20"
-                              onClick={() => {
-                                setSelectedPersonId(signal.person_id);
-                                setSelectedPersonName(signal.person);
-                                setSelectedSignalReason(signal.reason);
-                                setAutoCoachOpen(true);
-                              }}
-                            >
-                              <Bot className="h-4 w-4 mr-2" />
-                              Start Auto-Coach
-                            </Button>
-                          )}
-                          {signal.action_type === 'kudos' && (
-                             <Button 
-                              variant="outline"
-                              size="sm"
-                              className="shadow-soft hover:shadow-dashboard transition-all duration-200 hover:scale-105 bg-success/10 border-success/20 text-success hover:bg-success/20"
-                              onClick={() => recognizeAndCloseLoop.mutate({ personId: signal.person_id })}
-                              disabled={recognizeAndCloseLoop.isPending}
-                            >
-                              <CheckCircle className="h-4 w-4 mr-2" />
-                              {recognizeAndCloseLoop.isPending ? 'Processing...' : 'Recognize & Close Loop'}
-                            </Button>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-
-              {/* Mobile Card View */}
-              <div className="lg:hidden space-y-3">
-                {signals.map((signal, index) => (
-                  <Card 
-                    key={signal.id} 
-                    className="bg-gradient-card border-border shadow-card animate-fade-in"
-                    style={{ animationDelay: `${index * 50}ms` }}
-                  >
-                    <CardContent className="p-4 space-y-3">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium text-sm truncate">{signal.person}</div>
-                          <div className="text-xs text-muted-foreground truncate">{signal.email}</div>
-                        </div>
-                        <Badge 
-                          variant="outline" 
-                          className={`${getBadgeColor(signal.level)} text-xs`}
-                        >
-                          {signal.level}
-                        </Badge>
-                      </div>
-                      
-                      <div className="text-sm text-foreground line-clamp-2" title={signal.reason}>
-                        {signal.reason}
-                      </div>
-                      
-                       <div className="flex items-center justify-between text-xs">
-                         <div className="flex items-center gap-2">
-                           <span className="text-muted-foreground font-mono">
-                             {format(new Date(signal.ts), "MMM dd, HH:mm")}
-                           </span>
-                           <div className="flex items-center gap-1 text-muted-foreground">
-                             <Users className="w-3 h-3" />
-                             <span>{signal.evidence_count} events</span>
-                           </div>
-                           {signal.coach_active && (
-                             <Badge variant="outline" className="text-xs">
-                               Coaching
-                             </Badge>
-                           )}
-                         </div>
-                         {signal.score_delta !== null && signal.score_delta !== 0 && (
-                          <span className={`font-semibold ${
-                            signal.score_delta < 0 
-                              ? 'text-success' 
-                              : signal.level === 'critical' 
-                                ? 'text-destructive'
-                                : signal.level === 'risk'
-                                  ? 'text-warning'
-                                  : signal.level === 'warn'
-                                    ? 'text-warning'
-                                    : 'text-warning'
-                          }`}>
-                            {signal.score_delta > 0 
-                              ? `+${Math.round(signal.score_delta * 10) / 10} Risk ↑`
-                              : `–${Math.abs(Math.round(signal.score_delta * 10) / 10)} Risk ↓`
-                            }
-                          </span>
-                        )}
-                      </div>
-                      
-                      <div className="pt-2">
-                        {signal.action_type === 'release' && (
-                          <div className="space-y-2">
                             <Button 
                               variant="outline"
                               size="sm"
-                              className="w-full shadow-soft hover:shadow-dashboard transition-all duration-200 bg-destructive/10 border-destructive/20 text-destructive hover:bg-destructive/20"
+                              className={`w-full shadow-soft transition-all duration-200 ${
+                                !signal.coach_active
+                                  ? 'hover:shadow-dashboard bg-primary/10 border-primary/20 text-primary hover:bg-primary/20'
+                                  : 'opacity-50 cursor-not-allowed bg-muted/50 border-muted text-muted-foreground'
+                              }`}
                               onClick={() => {
-                                setSelectedPersonId(signal.person_id);
-                                setSelectedPersonName(signal.person);
-                                setSelectedSignalReason(signal.reason);
-                                setModalOpen(true);
+                                if (!signal.coach_active) {
+                                  setSelectedPersonId(signal.person_id);
+                                  setSelectedPersonName(signal.person);
+                                  setSelectedSignalReason(signal.reason);
+                                  setAutoCoachOpen(true);
+                                }
                               }}
-                              disabled={signal.action_disabled}
-                              title={signal.action_disabled ? signal.action_reason : undefined}
+                              disabled={signal.coach_active}
                             >
-                              <UserCheck className="h-4 w-4 mr-2" />
-                              Evaluate for Release
+                              <Bot className="h-4 w-4 mr-2" />
+                              {signal.coach_active ? 'Already Coaching' : 'Start Auto-Coach'}
                             </Button>
-                            {signal.action_disabled && signal.action_reason && (
-                              <div className="text-xs text-muted-foreground text-center">
-                                {signal.action_reason}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                        {signal.action_type === 'coach' && (
-                          <Button 
-                            variant="outline"
-                            size="sm"
-                            className="w-full shadow-soft hover:shadow-dashboard transition-all duration-200 bg-primary/10 border-primary/20 text-primary hover:bg-primary/20"
-                            onClick={() => {
-                              setSelectedPersonId(signal.person_id);
-                              setSelectedPersonName(signal.person);
-                              setSelectedSignalReason(signal.reason);
-                              setAutoCoachOpen(true);
-                            }}
-                          >
-                            <Bot className="h-4 w-4 mr-2" />
-                            Start Auto-Coach
-                          </Button>
-                        )}
-                        {signal.action_type === 'kudos' && (
-                          <Button 
-                            variant="outline"
-                            size="sm"
-                            className="w-full shadow-soft hover:shadow-dashboard transition-all duration-200 bg-success/10 border-success/20 text-success hover:bg-success/20"
-                            onClick={() => recognizeAndCloseLoop.mutate({ personId: signal.person_id })}
-                            disabled={recognizeAndCloseLoop.isPending}
-                          >
-                            <CheckCircle className="h-4 w-4 mr-2" />
-                            {recognizeAndCloseLoop.isPending ? 'Processing...' : 'Recognize & Close Loop'}
-                          </Button>
-                        )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-16 space-y-4 animate-fade-in">
-              <div className="relative">
-                <div className="p-4 bg-accent rounded-full">
-                  <Activity className="h-12 w-12 text-muted-foreground" />
+                          )}
+                          {signal.action_type === 'kudos' && (
+                            <Button 
+                              variant="outline"
+                              size="sm"
+                              className="w-full shadow-soft hover:shadow-dashboard transition-all duration-200 bg-success/10 border-success/20 text-success hover:bg-success/20"
+                              onClick={() => closeCoachingLoop.mutate({ personId: signal.person_id })}
+                              disabled={closeCoachingLoop.isPending}
+                            >
+                              <CheckCircle className="h-4 w-4 mr-2" />
+                              {closeCoachingLoop.isPending ? 'Processing...' : 'Recognize & Close Loop'}
+                            </Button>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
-                <div className="absolute -top-1 -right-1 w-6 h-6 bg-primary/20 rounded-full animate-ping"></div>
               </div>
-              <div className="text-center space-y-2 max-w-md">
-                <h3 className="text-lg font-semibold text-foreground">No signals detected</h3>
-                <p className="text-sm text-muted-foreground">
-                  Your AI monitoring system is running smoothly. No risk signals match the current filters.
-                </p>
-                <Button 
-                  variant="outline" 
-                  onClick={() => {
-                    setLevelFilter('all');
-                    setStartDate(undefined);
-                    setEndDate(undefined);
-                  }}
-                  className="mt-4 hover:bg-primary/5"
-                >
-                  Clear All Filters
-                </Button>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-16 space-y-4 animate-fade-in">
+                <div className="relative">
+                  <div className="p-4 bg-accent rounded-full">
+                    <Activity className="h-12 w-12 text-muted-foreground" />
+                  </div>
+                  <div className="absolute -top-1 -right-1 w-6 h-6 bg-primary/20 rounded-full animate-ping"></div>
+                </div>
+                <div className="text-center space-y-2 max-w-md">
+                  <h3 className="text-lg font-semibold text-foreground">No signals detected</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Your AI monitoring system is running smoothly. No risk signals match the current filters.
+                  </p>
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setLevelFilter('all');
+                      setStartDate(undefined);
+                      setEndDate(undefined);
+                      setOnlyActionable(false);
+                    }}
+                    className="mt-4 hover:bg-primary/5"
+                  >
+                    Clear All Filters
+                  </Button>
+                </div>
               </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-      
-      <ReleaseEvaluationModal
-        open={modalOpen}
-        onOpenChange={setModalOpen}
-        personId={selectedPersonId}
-        personName={selectedPersonName}
-        reason={selectedSignalReason}
-      />
-      
-      <AutoCoachModal
-        open={autoCoachOpen}
-        onOpenChange={setAutoCoachOpen}
-        personId={selectedPersonId}
-        personName={selectedPersonName}
-        reason={selectedSignalReason}
-      />
+            )}
+          </CardContent>
+        </Card>
+        
+        <ReleaseEvaluationModal
+          open={modalOpen}
+          onOpenChange={setModalOpen}
+          personId={selectedPersonId}
+          personName={selectedPersonName}
+          reason={selectedSignalReason}
+        />
+        
+        <AutoCoachModal
+          open={autoCoachOpen}
+          onOpenChange={setAutoCoachOpen}
+          personId={selectedPersonId}
+          personName={selectedPersonName}
+          reason={selectedSignalReason}
+        />
 
-      <EvidenceModal
-        isOpen={evidenceOpen}
-        onClose={() => setEvidenceOpen(false)}
-        evidence={evidenceData}
-        personName={selectedPersonName}
-      />
-    </div>
+        <EvidenceModal
+          isOpen={evidenceOpen}
+          onClose={() => setEvidenceOpen(false)}
+          evidence={evidenceData}
+          personName={selectedPersonName}
+        />
+      </div>
+    </TooltipProvider>
   );
-};
-
-export default SignalsTable;
+}

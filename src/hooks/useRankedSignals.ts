@@ -11,12 +11,10 @@ export interface RankedSignalData {
   reason: string;
   score_delta: number | null;
   action_type: 'release' | 'coach' | 'kudos' | 'none';
-  action_disabled?: boolean;
-  action_reason?: string;
-  start_date?: string;
   tenure_ok: boolean;
   evidence_ok: boolean;
   coach_active: boolean;
+  disable_reason: string;
   evidence_count: number;
 }
 
@@ -117,16 +115,13 @@ export const useRankedSignals = ({ levelFilter, startDate, endDate, multipleLeve
         else if (signal.level === 'info') action_type = 'kudos';
         
         // Calculate disable reason for release actions
-        let action_disabled = false;
-        let action_reason = '';
+        let disable_reason = '';
         
         if (action_type === 'release') {
           const reasons = [];
           if (!tenureOk) reasons.push('Tenure < 21 days');
           if (!evidenceOk) reasons.push('Insufficient evidence');
-          
-          action_disabled = reasons.length > 0;
-          action_reason = reasons.join(' AND ');
+          disable_reason = reasons.join(' AND ');
         }
 
         return {
@@ -139,12 +134,10 @@ export const useRankedSignals = ({ levelFilter, startDate, endDate, multipleLeve
           score_delta: signal.score_delta,
           person_id: signal.person_id,
           action_type,
-          action_disabled,
-          action_reason,
-          start_date: person.start_date,
           tenure_ok: tenureOk,
           evidence_ok: evidenceOk,
           coach_active: coachActive,
+          disable_reason,
           evidence_count: evidenceCount
         };
       });
