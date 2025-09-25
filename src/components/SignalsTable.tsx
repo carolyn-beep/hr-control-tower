@@ -26,16 +26,10 @@ const SignalsTable = () => {
   // Get initial filters from URL parameters
   const getInitialLevelFilter = () => {
     const levelParam = searchParams.get('level');
-    console.log('URL level param:', levelParam);
     if (levelParam) {
-      // Handle multiple levels like "risk,critical"
-      const levels = levelParam.split(',').map(l => l.trim());
-      console.log('Parsed levels:', levels);
-      if (levels.length === 1) {
-        return levels[0];
-      } else if (levels.includes('risk') && levels.includes('critical')) {
-        return 'risk_critical'; // Special value for risk+critical combo
-      }
+      const levels = levelParam.split(',').map((l) => l.trim());
+      if (levels.length === 1) return levels[0];
+      if (levels.includes('risk') && levels.includes('critical')) return 'risk_critical';
     }
     return 'all';
   };
@@ -43,7 +37,7 @@ const SignalsTable = () => {
   const [levelFilter, setLevelFilter] = useState<string>(getInitialLevelFilter());
   const getInitialSortMode = () => {
     const sortParam = searchParams.get('sort');
-    if (sortParam === 'ts_desc' || sortParam === 'ts_asc' || sortParam === 'priority') return sortParam;
+    if (sortParam === 'ts_desc' || sortParam === 'ts_asc' || sortParam === 'priority') return sortParam as any;
     return 'priority';
   };
   const [sortMode, setSortMode] = useState<'ts_desc' | 'ts_asc' | 'priority'>(getInitialSortMode());
@@ -60,7 +54,6 @@ const SignalsTable = () => {
   const { toast } = useToast();
   // Modify levelFilter for API call
   const getApiLevelFilter = () => {
-    console.log('Current levelFilter:', levelFilter);
     if (levelFilter === 'risk_critical') {
       return 'risk'; // We'll handle multiple levels in the hook
     }
@@ -68,13 +61,6 @@ const SignalsTable = () => {
   };
 
   const multipleLevelsParam = levelFilter === 'risk_critical' ? ['risk', 'critical'] : undefined;
-  console.log('Query params:', { 
-    levelFilter: getApiLevelFilter(), 
-    multipleLevels: multipleLevelsParam,
-    startDate: startDate?.toISOString(),
-    endDate: endDate?.toISOString(),
-    sortMode,
-  });
 
   const { data: signals, isLoading, error } = useRankedSignals({
     levelFilter: getApiLevelFilter(),
