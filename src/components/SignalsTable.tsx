@@ -502,6 +502,13 @@ const SignalsTable = () => {
         personName={selectedPersonName}
         reason={selectedSignalReason}
       />
+
+      <EvidenceModal
+        isOpen={evidenceOpen}
+        onClose={() => setEvidenceOpen(false)}
+        evidence={evidenceData}
+        personName={selectedPersonName}
+      />
     </div>
   );
 };
