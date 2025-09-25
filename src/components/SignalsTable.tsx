@@ -286,17 +286,20 @@ export default function SignalsTable() {
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-muted/50">
+                        <TableHead className="font-semibold text-foreground">Timestamp</TableHead>
                         <TableHead className="font-semibold text-foreground">Person</TableHead>
                         <TableHead className="font-semibold text-foreground">Level</TableHead>
                         <TableHead className="font-semibold text-foreground">Reason</TableHead>
-                        <TableHead className="font-semibold text-foreground">Time</TableHead>
-                        <TableHead className="font-semibold text-foreground text-right">Risk Impact</TableHead>
+                        <TableHead className="font-semibold text-foreground text-right">Score Delta</TableHead>
                         <TableHead className="font-semibold text-foreground text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {filteredSignals.map((signal) => (
                         <TableRow key={signal.id} className="hover:bg-muted/30 transition-colors">
+                          <TableCell className="font-mono text-sm text-muted-foreground">
+                            {format(new Date(signal.ts), "MMM dd, HH:mm")}
+                          </TableCell>
                           <TableCell>
                             <div>
                               <div className="font-medium">{signal.person}</div>
@@ -326,9 +329,6 @@ export default function SignalsTable() {
                               </Button>
                             </div>
                           </TableCell>
-                          <TableCell className="font-mono text-sm text-muted-foreground">
-                            {format(new Date(signal.ts), "MMM dd, HH:mm")}
-                          </TableCell>
                           <TableCell className="text-right font-mono">
                             {signal.score_delta !== null && signal.score_delta !== 0 ? (
                               <span className={`text-sm font-semibold ${
@@ -348,12 +348,12 @@ export default function SignalsTable() {
                             )}
                           </TableCell>
                           <TableCell className="text-right">
-                            {/* Evaluate for Release - Purple/Red - Critical/Risk levels */}
-                            {['risk', 'critical'].includes((signal.level || '').toLowerCase()) && (
+                            {/* Conditional buttons based on level */}
+                            {['risk', 'critical'].includes((signal.level || '').toLowerCase()) ? (
                               <Button 
                                 variant="outline"
                                 size="sm"
-                                className="shadow-soft transition-all duration-200 hover:shadow-dashboard hover:scale-105 bg-destructive/10 border-destructive/20 text-destructive hover:bg-destructive/20"
+                                className="shadow-soft transition-all duration-200 hover:shadow-dashboard hover:scale-105 bg-blue-600 text-white border-blue-600 hover:bg-blue-700"
                                 onClick={() => {
                                   setSelectedSignalId(signal.id);
                                   setSelectedPersonId(signal.person_id);
@@ -365,10 +365,7 @@ export default function SignalsTable() {
                                 <UserCheck className="h-4 w-4 mr-2" />
                                 Evaluate for Release
                               </Button>
-                            )}
-                            
-                            {/* Start Auto-Coach - Blue/Primary - Warn/Warning levels */}
-                            {['warn', 'warning'].includes((signal.level || '').toLowerCase()) && (
+                            ) : ['warn', 'warning'].includes((signal.level || '').toLowerCase()) ? (
                               <Button 
                                 variant="outline"
                                 size="sm"
@@ -383,10 +380,7 @@ export default function SignalsTable() {
                                 <Bot className="h-4 w-4 mr-2" />
                                 Start Auto-Coach
                               </Button>
-                            )}
-                            
-                            {/* Recognize & Close Loop - Green/Success - Info level */}
-                            {(signal.level || '').toLowerCase() === 'info' && (
+                            ) : (signal.level || '').toLowerCase() === 'info' ? (
                               <Button 
                                 variant="outline"
                                 size="sm"
@@ -396,6 +390,22 @@ export default function SignalsTable() {
                               >
                                 <CheckCircle className="h-4 w-4 mr-2" />
                                 {closeCoachingLoop.isPending ? 'Processing...' : 'Recognize & Close Loop'}
+                              </Button>
+                            ) : (
+                              <Button 
+                                variant="outline"
+                                size="sm"
+                                className="shadow-soft transition-all duration-200 hover:shadow-dashboard hover:scale-105 bg-blue-600 text-white border-blue-600 hover:bg-blue-700"
+                                onClick={() => {
+                                  setSelectedSignalId(signal.id);
+                                  setSelectedPersonId(signal.person_id);
+                                  setSelectedPersonName(signal.person);
+                                  setSelectedSignalReason(signal.reason);
+                                  setModalOpen(true);
+                                }}
+                              >
+                                <UserCheck className="h-4 w-4 mr-2" />
+                                Evaluate for Release
                               </Button>
                             )}
                           </TableCell>
