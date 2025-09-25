@@ -32,7 +32,12 @@ export default function SignalsTable() {
   };
 
   const getApiLevelFilter = (levelFilter: string) => {
-    if (levelFilter === 'all') return undefined;
+    if (!levelFilter || levelFilter === 'all') return undefined;
+    // Support comma-separated values from URL (e.g., "risk,critical")
+    if (levelFilter.includes(',')) {
+      return levelFilter.split(',').map((l) => l.trim()).filter(Boolean);
+    }
+    // Backward compatibility for previous format
     if (levelFilter === 'risk+critical') return ['risk', 'critical'];
     return levelFilter;
   };
