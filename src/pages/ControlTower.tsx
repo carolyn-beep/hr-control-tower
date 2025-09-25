@@ -805,7 +805,7 @@ const ControlTower = () => {
    );
  };
 
-// Component for signal action buttons with safeguards
+// Component for signal action buttons - level-based visibility
 const SignalActionButton = ({ 
   signal, 
   onEvaluateClick, 
@@ -816,13 +816,15 @@ const SignalActionButton = ({
   onCoachClick: () => void; 
 }) => {
   const recognizeAndCloseLoop = useRecognizeAndCloseLoop();
-  
-  if (signal.action_type === 'release') {
+  const level = (signal.level || '').toLowerCase();
+
+  // 1) Evaluate for Release (primary) for risk/critical
+  if (['risk', 'critical'].includes(level)) {
     return (
       <Button 
-        variant="outline"
+        variant="default"
         size="sm"
-        className="shadow-soft hover:shadow-dashboard transition-all duration-200 hover:scale-105 bg-purple-500/10 border-purple-500/20 text-purple-600 hover:bg-purple-500/20"
+        className="shadow-soft hover:shadow-dashboard transition-all duration-200 hover:scale-105"
         onClick={onEvaluateClick}
       >
         <UserCheck className="h-4 w-4 mr-2" />
@@ -830,13 +832,14 @@ const SignalActionButton = ({
       </Button>
     );
   }
-  
-  if (signal.action_type === 'coach') {
+
+  // 2) Start Auto-Coach (primary tinted) for warn/warning
+  if (['warn', 'warning'].includes(level)) {
     return (
       <Button 
         variant="outline"
         size="sm"
-        className="shadow-soft hover:shadow-dashboard transition-all duration-200 hover:scale-105 bg-blue-500/10 border-blue-500/20 text-blue-600 hover:bg-blue-500/20"
+        className="shadow-soft hover:shadow-dashboard transition-all duration-200 hover:scale-105 bg-primary/10 border-primary/20 text-primary hover:bg-primary/20"
         onClick={onCoachClick}
       >
         <Bot className="h-4 w-4 mr-2" />
@@ -844,13 +847,14 @@ const SignalActionButton = ({
       </Button>
     );
   }
-  
-  if (signal.action_type === 'kudos') {
+
+  // 3) Recognize & Close Loop (success) for info
+  if (level === 'info') {
     return (
       <Button 
         variant="outline"
         size="sm"
-        className="shadow-soft hover:shadow-dashboard transition-all duration-200 hover:scale-105 bg-green-500/10 border-green-500/20 text-green-600 hover:bg-green-500/20"
+        className="shadow-soft hover:shadow-dashboard transition-all duration-200 hover:scale-105 bg-success/10 border-success/20 text-success hover:bg-success/20"
         onClick={() => recognizeAndCloseLoop.mutate({ personId: signal.person_id })}
         disabled={recognizeAndCloseLoop.isPending}
       >
@@ -859,8 +863,19 @@ const SignalActionButton = ({
       </Button>
     );
   }
-  
-  return null;
+
+  // Fallback: show Evaluate button so row is never empty
+  return (
+    <Button 
+      variant="default"
+      size="sm"
+      className="shadow-soft hover:shadow-dashboard transition-all duration-200 hover:scale-105"
+      onClick={onEvaluateClick}
+    >
+      <UserCheck className="h-4 w-4 mr-2" />
+      Evaluate for Release
+    </Button>
+  );
 };
 
 export default ControlTower;
